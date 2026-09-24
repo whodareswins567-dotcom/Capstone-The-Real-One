@@ -1,9 +1,13 @@
 from pathlib import Path
+import os
 import sqlite3
 
 
+
 BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "inventory.db"
+DEFAULT_DB_PATH = BASE_DIR / "inventory.db"
+
+DB_PATH = Path(os.environ.get("INVENTORY_DB_PATH", str(DEFAULT_DB_PATH)))
 
 
 def get_connection() -> sqlite3.Connection:
@@ -20,7 +24,7 @@ def init_db() -> None:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 sku TEXT NOT NULL UNIQUE,
                 name TEXT NOT NULL,
-                category TEXT NOT NULL,
+                category TAXT NOT NULL,
                 quantity INTEGER NOT NULL DEFAULT 0,
                 reorder_level INTEGER NOT NULL DEFAULT 0,
                 location TEXT NOT NULL DEFAULT 'Main Store',
@@ -40,7 +44,7 @@ def init_db() -> None:
                 SET updated_at = CURRENT_TIMESTAMP
                 WHERE id = OLD.id;
             END;
-            """
+            """"
         )
 
 
