@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Inventory Management</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <h1>Inventory</h1>
+        <p>Track stock levels, locations, and reorder signals.</p>
+      </div>
+      <button id="refreshButton" type="button">Refresh</button>
+    </header>
+
+    <main class="layout">
+      <section class="panel form-panel">
+        <h2 id="formTitle">Add Item</h2>
+        <form id="itemForm">
+          <input type="hidden" id="itemId" />
+
+          <label>
+            SKU
+            <input id="sku" name="sku" required minlength="2" maxlength="40" />
+          </label>
+
+          <label>
+            Name
+            <input id="name" name="name" required minlength="2" maxlength="120" />
+          </label>
+
+          <label>
+            Category
+            <input id="category" name="category" required minlength="2" maxlength="80" />
+          </label>
+
+          <div class="split">
+            <label>
+              Quantity
+              <input id="quantity" name="quantity" required type="number" min="0" />
+            </label>
+            <label>
+              Reorder Level
+              <input id="reorder_level" name="reorder_level" required type="number" min="0" />
+            </label>
+          </div>
+
+          <label>
+            Location
+            <input id="location" name="location" required minlength="2" maxlength="120" />
+          </label>
+
+          <label>
+            Notes
+            <textarea id="notes" name="notes" maxlength="500"></textarea>
+          </label>
+
+          <div class="actions">
+            <button type="submit" id="saveButton">Save</button>
+            <button type="button" id="cancelButton" class="secondary">Cancel</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="inventory-view">
+        <div class="toolbar">
+          <input id="searchInput" placeholder="Search SKU, name, or category" />
+          <label class="checkbox">
+            <input type="checkbox" id="lowStockOnly" />
+            Low stock only
+          </label>
+        </div>
+
+        <div id="message" class="message" hidden></div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>SKU</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Qty</th>
+                <th>Reorder</th>
+                <th>Location</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="itemsBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
