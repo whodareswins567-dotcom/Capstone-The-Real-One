@@ -1,15 +1,18 @@
 from pathlib import Path
+import os
 import sqlite3
 
 
 BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "inventory.db"
+DB_PATH = Path(os.environ.get("INVENTORY_DB_PATH", str(BASE_DIR / "inventory.db")))
+
 
 
 def get_connection() -> sqlite3.Connection:
     connection = sqlite3.connect(DB_PATH)
     connection.row_factory = sqlite3.Row
     return connection
+
 
 
 def init_db() -> None:
@@ -27,7 +30,7 @@ def init_db() -> None:
                 notes TEXT,
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-            )
+             )
             """
         )
         connection.execute(
@@ -40,8 +43,9 @@ def init_db() -> None:
                 SET updated_at = CURRENT_TIMESTAMP
                 WHERE id = OLD.id;
             END;
-            """
+            """"
         )
+
 
 
 def seed_db() -> None:
