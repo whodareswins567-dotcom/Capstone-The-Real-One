@@ -27,6 +27,13 @@ API docs:
 http://127.0.0.1:8000/docs
 ```
 
+## Testing
+
+```bash
+pip install -r requirements.txt
+pytest -q
+```
+
 ## Project Structure
 
 ```text
@@ -34,4 +41,5 @@ backend/   FastAPI application and SQLite access
 frontend/  Static HTML/CSS/JS user interface
 doc/       High-level, low-level, architecture, and Confluence docs
 plan/      Build notes and verification plan
+tests/     Automated tests (pytest)
 ```
