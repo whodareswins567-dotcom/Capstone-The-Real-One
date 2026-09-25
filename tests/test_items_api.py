@@ -75,13 +75,13 @@ def test_patch_item_updates_fields(client):
     assert found["quantity"] == 9
 
 
-def test_patch_item_unknown_returns_2044(client):
-    resp = client.patch("/api/items/999999", json={"name": "X"})
+def test_patch_item_unknown_returns_404(client):
+    resp = client.patch("/api/items/999999", json={"name": "Nonexistent"})
     assert resp.status_code == 404
 
 
 
-def test_patch_item_empty_payload_returns_2004(client):
+def test_patch_item_empty_payload_returns_400(client):
     create = client.post(
         "/api/items",
         json={
@@ -117,8 +117,8 @@ def test_delete_item_204_and_removed(client):
     assert create.status_code == 201
     item_id = create.json()["id"]
 
-    del = client.delete(f"/api/items/{item_id}")
-    assert del.status_code == 204
+    delete_resp = client.delete(f"/api/items/{item_id}")
+    assert delete_resp.status_code == 204
 
     list_resp = client.get("/api/items")
     assert list_resp.status_code == 200
@@ -163,7 +163,7 @@ def test_low_stock_filters_results(client):
             "category": "Widgets",
             "quantity": 1,
             "reorder_level": 5,
-            "location": "A2\",
+            "location": "A2",
             "notes": "",
         },
     )

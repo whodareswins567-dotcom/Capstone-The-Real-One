@@ -5,12 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 
-#pyretype: disable=attr-defined
-
-
 @pytest.fixture
-rescope="function"
-
 def client(tmp_path, monkeypatch):
     """Create a test client that uses a temporary SQLite database.
 
