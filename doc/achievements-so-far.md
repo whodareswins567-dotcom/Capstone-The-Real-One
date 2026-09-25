@@ -14,7 +14,7 @@
 - Added automatic database initialization on application startup.
 - Added sample seed inventory data.
 - Created Pydantic models for request validation and API responses.
-- Added REST API endpoints for:
+- Added REST API endpoints for :
   - Health check.
   - Listing inventory items.
   - Searching inventory items.
@@ -22,6 +22,7 @@
   - Creating inventory items.
   - Updating inventory items.
   - Deleting inventory items.
+
 
 ## Frontend Achievements
 
@@ -44,14 +45,15 @@
 
 - Added high-level design documentation.
 - Added low-level design documentation.
-- Added architecture documentation.
+i- Added architecture documentation.
 - Added API reference documentation.
 - Added a Confluence-ready summary document.
 
 ## Planning Achievements
 
-- Added an implementation plan.
-- Added a test plan.
+- Added an implementation plan under `plan/implementation-plan.md`.
+- Added a test plan under `plan/test-plan.md`.
+
 
 ## Verification Completed
 
