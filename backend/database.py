@@ -9,7 +9,7 @@ DEFAULT_DB_PATH = BASE_DIR / "inventory.db"
 
 # Allow overriding the DB location for tests and deployments.
 # If not set, defaults to backend/inventory.db (existing behavior).
-#DF_Path must be a file path for SQLite.
+#DB_PATH must be a file path for SQLite.
 DB_PATH = Path(os.environ.get("INVENTORY_DB_PATH", str(DEFAULT_DB_PATH)))
 
 
@@ -65,6 +65,6 @@ def seed_db() -> None:
                 INSERT OR IGNORE INTO inventory_items
                   (sku, name, category, quantity, reorder_level, location, notes)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
-                """
+                """,
                 item,
             )
