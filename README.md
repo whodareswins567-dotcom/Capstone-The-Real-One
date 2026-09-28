@@ -10,6 +10,8 @@ The implementation supports basic item listing, creation, editing, deletion, and
 
 ## Run Locally
 
+`requirements.txt` lists runtime dependencies only; `requirements-dev.txt` adds test-only dependencies (pytest, httpx, pytest-cov) on top of it.
+
 ```bash
 pip install -r requirements.txt
 uvicorn backend.main:app --reload

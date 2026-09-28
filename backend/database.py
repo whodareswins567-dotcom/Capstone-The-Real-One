@@ -5,6 +5,7 @@ import sqlite3
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = Path(os.getenv("INVENTORY_DB_PATH", str(BASE_DIR / "inventory.db")))
+SEED_ON_STARTUP = os.getenv("INVENTORY_SEED_DB", "1") != "0"
 
 
 def get_connection() -> sqlite3.Connection:
@@ -46,6 +47,9 @@ def init_db() -> None:
 
 
 def seed_db() -> None:
+    if not SEED_ON_STARTUP:
+        return
+
     sample_items = [
         ("SKU-1001", "Barcode Scanner", "Electronics", 8, 3, "Aisle 1", "Shared scanner pool"),
         ("SKU-1002", "Thermal Labels", "Stationery", 120, 50, "Aisle 4", "50mm x 25mm rolls"),
