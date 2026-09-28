@@ -158,6 +158,18 @@ def test_search_filters_results(client):
             "notes": "",
         },
     )
+    client.post(
+        "/api/items",
+        json={
+            "sku": "SKU-2006B",
+            "name": "Non-matching Widget",
+            "category": "Misc",
+            "quantity": 1,
+            "reorder_level": 1,
+            "location": "A1",
+            "notes": "",
+        },
+    )
 
     resp = client.get("/api/items", params={"search": "xyz123"})
     assert resp.status_code == 200
@@ -165,6 +177,7 @@ def test_search_filters_results(client):
     assert len(results) >= 1
     assert all("xyz123" in item["name"] for item in results)
     assert any(item["sku"] == "SKU-2006" for item in results)
+    assert not any(item["sku"] == "SKU-2006B" for item in results)
 
 
 
