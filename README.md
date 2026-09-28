@@ -37,6 +37,8 @@ pytest -q
 
 The automated suite (`backend/tests/`) runs against an isolated temp SQLite DB and never touches `backend/inventory.db`. Outside of tests, the same isolation is available via env vars: `INVENTORY_DB_PATH` to point at a different DB file, and `INVENTORY_SEED_DB=0` to skip inserting the dev sample rows on startup.
 
+CI (`.github/workflows/ci.yml`) runs this same `pytest -q` suite on every push and on pull requests targeting `main`, and reports pass/fail status on the PR.
+
 ## Project Structure
 
 ```text
