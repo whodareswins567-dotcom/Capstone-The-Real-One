@@ -1,13 +1,24 @@
 from pathlib import Path
+import os
 import sqlite3
 
 
 BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "inventory.db"
+DEFAULT_DB_PATH = BASE_DIR / "inventory.db"
+
+DB_PATH = None
+SEED_ON_STARTUP = os.getenv("INVENTORY_SEED_DB", "1") != "0"
+
+
+def get_db_path() -> Path:
+    """Resolves the DB path lazily so INVENTORY_DB_PATH can be set at runtime, not just before import."""
+    if DB_PATH is not None:
+        return Path(DB_PATH)
+    return Path(os.getenv("INVENTORY_DB_PATH", str(DEFAULT_DB_PATH)))
 
 
 def get_connection() -> sqlite3.Connection:
-    connection = sqlite3.connect(DB_PATH)
+    connection = sqlite3.connect(get_db_path())
     connection.row_factory = sqlite3.Row
     return connection
 
@@ -45,6 +56,9 @@ def init_db() -> None:
 
 
 def seed_db() -> None:
+    if not SEED_ON_STARTUP:
+        return
+
     sample_items = [
         ("SKU-1001", "Barcode Scanner", "Electronics", 8, 3, "Aisle 1", "Shared scanner pool"),
         ("SKU-1002", "Thermal Labels", "Stationery", 120, 50, "Aisle 4", "50mm x 25mm rolls"),
