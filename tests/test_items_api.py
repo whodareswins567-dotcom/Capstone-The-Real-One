@@ -194,6 +194,18 @@ def test_low_stock_filters_results(client):
             "notes": "",
         },
     )
+    client.post(
+        "/api/items",
+        json={
+            "sku": "SKU-2007B",
+            "name": "Well Stocked Widget",
+            "category": "Widgets",
+            "quantity": 50,
+            "reorder_level": 5,
+            "location": "A2",
+            "notes": "",
+        },
+    )
 
     resp = client.get("/api/items", params={"low_stock": "true"})
     assert resp.status_code == 200
@@ -201,3 +213,4 @@ def test_low_stock_filters_results(client):
     assert len(results) >= 1
     assert all(item["quantity"] <= item["reorder_level"] for item in results)
     assert any(item["sku"] == "SKU-2007" for item in results)
+    assert not any(item["sku"] == "SKU-2007B" for item in results)

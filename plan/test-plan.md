@@ -21,8 +21,12 @@ pytest -q
 
 ## Database Isolation
 
-- Tests set the env var `INVENTORY_DB_PATH` to a temp file DB.
-- Schema + seed are applied before in-process app client is created.
+- `backend.main.create_app(db_path)` builds a FastAPI app pinned to an explicit
+  SQLite path via `app.state.db_path`, injected into route handlers through the
+  `get_db_connection` dependency.
+- The `client` fixture (`tests/conftest.py`) calls `create_app(db_path=<tmp_path>/...)`
+  directly, so each test gets an isolated DB by construction - not by setting an
+  env var before import, and not dependent on import order.
 
 ## CI (GitHub Actions)
 
