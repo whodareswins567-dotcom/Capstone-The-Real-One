@@ -39,5 +39,8 @@ pytest -q
 backend/   FastAPI application and SQLite access
 frontend/  Static HTML/CSS/JS user interface
 doc/       High-level, low-level, architecture, and Confluence docs
+plan/      Implementation and testing plans (CAP-34)
 tests/     Automated tests
 ```
+
+- Planning: see `plan/implementation-plan.md` and `plan/test-plan.md`.
