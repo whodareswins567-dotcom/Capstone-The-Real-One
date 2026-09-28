@@ -6,7 +6,7 @@ def client(tmp_path):
     """Create a test client backed by an isolated temp SQLite database.
 
     db_path is passed directly to create_app(), which pins it on
-    app.state and threads it through init_db()/seed_db()/get_db_connection()
+    app.state and threads it through init_db()/seed_db()/get_app_db_path()
     - so isolation is guaranteed by dependency injection, not by an env var.
     backend.main is imported here rather than at module scope so no backend
     import-time side effects can run before the fixture.

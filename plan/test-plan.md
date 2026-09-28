@@ -23,7 +23,8 @@ pytest -q
 
 - `backend.main.create_app(db_path)` builds a FastAPI app pinned to an explicit
   SQLite path via `app.state.db_path`, injected into route handlers through the
-  `get_db_connection` dependency.
+  `get_app_db_path` dependency. Each handler opens and commits its own
+  connection before responding.
 - The `client` fixture (`tests/conftest.py`) calls `create_app(db_path=<tmp_path>/...)`
   directly, so each test gets an isolated DB by construction - not by setting an
   env var before import, and not dependent on import order.

@@ -138,6 +138,9 @@ def test_delete_item_204_and_removed(client):
     ids = [item["id"] for item in list_resp.json()]
     assert item_id not in ids
 
+    second_delete = client.delete(f"/api/items/{item_id}")
+    assert second_delete.status_code == 404
+
 
 
 def test_delete_item_unknown_returns_404(client):

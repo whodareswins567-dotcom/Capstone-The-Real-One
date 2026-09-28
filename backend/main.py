@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Iterator
 import sqlite3
 from contextlib import asynccontextmanager
 
@@ -24,9 +23,12 @@ def map_item(row: sqlite3.Row) -> InventoryItem:
     return InventoryItem(**data)
 
 
-def get_db_connection(request: Request) -> Iterator[sqlite3.Connection]:
-    with get_connection(request.app.state.db_path) as connection:
-        yield connection
+def get_app_db_path(request: Request) -> Path | str | None:
+    # Inject only the path, not a yielded connection: a yield dependency's
+    # teardown (where `with connection:` commits) runs after the response is
+    # sent, so a client could see 201/200/204 before the write is committed.
+    # Opening the connection inside each handler commits before responding.
+    return request.app.state.db_path
 
 
 @router.get("/", include_in_schema=False)
@@ -43,7 +45,7 @@ def health() -> dict[str, str]:
 def list_items(
     search: str | None = Query(default=None),
     low_stock: bool = Query(default=False),
-    connection: sqlite3.Connection = Depends(get_db_connection),
+    db_path: Path | str | None = Depends(get_app_db_path),
 ) -> list[InventoryItem]:
     sql = "SELECT * FROM inventory_items"
     params: list[object] = []
@@ -62,36 +64,38 @@ def list_items(
 
     sql += " ORDER BY updated_at DESC, id DESC"
 
-    rows = connection.execute(sql, params).fetchall()
-    return [map_item(row) for row in rows]
+    with get_connection(db_path) as connection:
+        rows = connection.execute(sql, params).fetchall()
+        return [map_item(row) for row in rows]
 
 
 @router.post("/api/items", response_model=InventoryItem, status_code=201)
 def create_item(
     payload: InventoryItemCreate,
-    connection: sqlite3.Connection = Depends(get_db_connection),
+    db_path: Path | str | None = Depends(get_app_db_path),
 ) -> InventoryItem:
     try:
-        cursor = connection.execute(
-            """
-            INSERT INTO inventory_items
-                (sku, name, category, quantity, reorder_level, location, notes)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                payload.sku,
-                payload.name,
-                payload.category,
-                payload.quantity,
-                payload.reorder_level,
-                payload.location,
-                payload.notes,
-            ),
-        )
-        row = connection.execute(
-            "SELECT * FROM inventory_items WHERE id = ?",
-            (cursor.lastrowid,),
-        ).fetchone()
+        with get_connection(db_path) as connection:
+            cursor = connection.execute(
+                """
+                INSERT INTO inventory_items
+                    (sku, name, category, quantity, reorder_level, location, notes)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    payload.sku,
+                    payload.name,
+                    payload.category,
+                    payload.quantity,
+                    payload.reorder_level,
+                    payload.location,
+                    payload.notes,
+                ),
+            )
+            row = connection.execute(
+                "SELECT * FROM inventory_items WHERE id = ?",
+                (cursor.lastrowid,),
+            ).fetchone()
     except sqlite3.IntegrityError as exc:
         raise HTTPException(status_code=409, detail="SKU already exists") from exc
 
@@ -102,7 +106,7 @@ def create_item(
 def update_item(
     item_id: int,
     payload: InventoryItemUpdate,
-    connection: sqlite3.Connection = Depends(get_db_connection),
+    db_path: Path | str | None = Depends(get_app_db_path),
 ) -> InventoryItem:
     fields = payload.model_dump(exclude_unset=True)
     if not fields:
@@ -113,17 +117,18 @@ def update_item(
     values.append(item_id)
 
     try:
-        cursor = connection.execute(
-            f"UPDATE inventory_items SET {assignments} WHERE id = ?",
-            values,
-        )
-        if cursor.rowcount == 0:
-            raise HTTPException(status_code=404, detail="Item not found")
+        with get_connection(db_path) as connection:
+            cursor = connection.execute(
+                f"UPDATE inventory_items SET {assignments} WHERE id = ?",
+                values,
+            )
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Item not found")
 
-        row = connection.execute(
-            "SELECT * FROM inventory_items WHERE id = ?",
-            (item_id,),
-        ).fetchone()
+            row = connection.execute(
+                "SELECT * FROM inventory_items WHERE id = ?",
+                (item_id,),
+            ).fetchone()
     except sqlite3.IntegrityError as exc:
         raise HTTPException(status_code=409, detail="SKU already exists") from exc
 
@@ -133,17 +138,18 @@ def update_item(
 @router.delete("/api/items/{item_id}", status_code=204)
 def delete_item(
     item_id: int,
-    connection: sqlite3.Connection = Depends(get_db_connection),
+    db_path: Path | str | None = Depends(get_app_db_path),
 ) -> None:
-    cursor = connection.execute("DELETE FROM inventory_items WHERE id = ?", (item_id,))
-    if cursor.rowcount == 0:
-        raise HTTPException(status_code=404, detail="Item not found")
+    with get_connection(db_path) as connection:
+        cursor = connection.execute("DELETE FROM inventory_items WHERE id = ?", (item_id,))
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Item not found")
 
 
 def create_app(db_path: Path | str | None = None) -> FastAPI:
     """Build the FastAPI app, optionally pinned to an explicit db_path.
 
-    db_path is stored on app.state and resolved by get_db_connection()/
+    db_path is stored on app.state and resolved by get_app_db_path()/
     init_db()/seed_db() at request/startup time - not here - so passing
     None keeps the normal INVENTORY_DB_PATH/default lookup in
     backend.database.get_db_path(). Tests pass an explicit path instead,

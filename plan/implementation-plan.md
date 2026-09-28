@@ -14,7 +14,7 @@ This document exists to reconcile the repo documentation with the actual repo st
 - Tests use an isolated SQLite database per test run (file backed in `tmp_path`).
   - `backend/main.py` exposes a `create_app(db_path)` factory. The db path is
     stored on `app.state.db_path` and threaded through `init_db()`/`seed_db()`
-    (lifespan) and route handlers (via the `get_db_connection` FastAPI
+    (lifespan) and route handlers (via the `get_app_db_path` FastAPI
     dependency), instead of being read from an env var at call time.
   - The test fixture (`tests/conftest.py`) calls `create_app(db_path=...)`
     directly with a `tmp_path` file, so isolation is guaranteed by
@@ -27,7 +27,8 @@ This document exists to reconcile the repo documentation with the actual repo st
 
 - `backend/database.py`: `get_connection()`/`init_db()`/`seed_db()` accept an
   optional explicit `db_path`, bypassing `get_db_path()`/env var when given.
-- `backend/main.py`: `create_app(db_path)` factory + `get_db_connection`
-  dependency, replacing the module-level `app`/inline `get_connection()` calls.
+- `backend/main.py`: `create_app(db_path)` factory + `get_app_db_path`
+  dependency, replacing the module-level `app`; handlers still open and commit
+  their own `get_connection(db_path)` before returning.
 - `tests/*`: add tests and fixtures.
 - `.github/workflows/ci.yml`: Run tests on PRs.
