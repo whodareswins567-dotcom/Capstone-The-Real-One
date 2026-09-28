@@ -33,6 +33,11 @@ pip install -r requirements.txt -r requirements-dev.txt
 pytest -q
 ```
 
+CI runs `pytest -q` directly (not `python -m pytest`), so `pytest.ini` pins
+`pythonpath = .` and `testpaths = tests` — otherwise `tests/conftest.py`'s
+`import backend.database` fails to resolve under a bare `pytest` invocation,
+and discovery could pick up stray test-like files outside `tests/`.
+
 ## Project Structure
 
 ```text
