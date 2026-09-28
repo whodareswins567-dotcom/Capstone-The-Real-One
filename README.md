@@ -36,8 +36,8 @@ pytest -q
 ## Project Structure
 
 ```text
-backend/   FastAPI application and SQLite access
-frontend/  Static HTML/CSS/JS user interface
-doc/       High-level, low-level, architecture, and Confluence docs
-tests/     Automated tests
+backend/       FastAPI application, SQLite access, and automated tests (backend/tests/)
+frontend/      Static HTML/CSS/JS user interface
+doc/           High-level, low-level, architecture, and Confluence docs
+plan/          Implementation plan and test plan
 ```
