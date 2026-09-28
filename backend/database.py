@@ -1,9 +1,16 @@
 from pathlib import Path
+import os
 import sqlite3
 
 
 BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "inventory.db"
+DEFAULT_DB_PATH = BASE_DIR / "inventory.db"
+
+
+# Allow overriding the DB location for tests and deployments.
+# If not set, defaults to backend/inventory.db (existing behavior).
+#DF_Path must be a file path for SQLite.
+DB_PATH = Path(os.environ.get("INVENTORY_DB_PATH", str(DEFAULT_DB_PATH)))
 
 
 def get_connection() -> sqlite3.Connection:
@@ -56,8 +63,8 @@ def seed_db() -> None:
             connection.execute(
                 """
                 INSERT OR IGNORE INTO inventory_items
-                    (sku, name, category, quantity, reorder_level, location, notes)
+                  (sku, name, category, quantity, reorder_level, location, notes)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
-                """,
+                """
                 item,
             )
