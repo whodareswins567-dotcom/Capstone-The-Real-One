@@ -1,28 +1,23 @@
-import importlib
-
-
 import pytest
-from fastapi.testclient import TestClient
 
 
 @pytest.fixture
-def client(tmp_path, monkeypatch):
-    """Create a test client that uses a temporary SQLite database.
+def client(tmp_path):
+    """Create a test client backed by an isolated temp SQLite database.
 
-    Important: the app lifespan calls init_db()/seed_db(), so
-    we must redirect DB_PATH BEFORE constructing TestClient.
+    db_path is passed directly to create_app(), which pins it on
+    app.state and threads it through init_db()/seed_db()/get_app_db_path()
+    - so isolation is guaranteed by dependency injection, not by an env var.
+    backend.main is imported here rather than at module scope so no backend
+    import-time side effects can run before the fixture.
     """
+    from fastapi.testclient import TestClient
+
+    from backend.main import create_app
+
     db_path = tmp_path / "test-inventory.db"
+    app = create_app(db_path=db_path)
+    assert app.state.db_path == db_path
 
-    db = importlib.import_module("backend.database")
-    monkeypatch.setattr(db, "DB_PATH", db_path)
-
-    # paranoia: ensure we don't touch the repo-checked-in DB.
-    assert "test-inventory.db" in str(db.DB_PATH)
-
-    db.init_db()
-    db.seed_db()
-
-    main = importlib.import_module("backend.main")
-    with TestClient(main.app) as test_client:
+    with TestClient(app) as test_client:
         yield test_client

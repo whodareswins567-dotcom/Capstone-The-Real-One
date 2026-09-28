@@ -1,19 +1,30 @@
 from pathlib import Path
+import os
 import sqlite3
 
 
 BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "inventory.db"
+DEFAULT_DB_PATH = BASE_DIR / "inventory.db"
 
 
-def get_connection() -> sqlite3.Connection:
-    connection = sqlite3.connect(DB_PATH)
+def get_db_path() -> Path:
+    """Resolve the SQLite DB path from INVENTORY_DB_PATH, falling back to
+    backend/inventory.db. Callers that need isolation should pass db_path
+    explicitly to get_connection()/init_db()/seed_db() instead of relying
+    on this env var.
+    """
+    db_path = os.environ.get("INVENTORY_DB_PATH")
+    return Path(db_path) if db_path else DEFAULT_DB_PATH
+
+
+def get_connection(db_path: Path | str | None = None) -> sqlite3.Connection:
+    connection = sqlite3.connect(db_path or get_db_path())
     connection.row_factory = sqlite3.Row
     return connection
 
 
-def init_db() -> None:
-    with get_connection() as connection:
+def init_db(db_path: Path | str | None = None) -> None:
+    with get_connection(db_path) as connection:
         connection.execute(
             """
             CREATE TABLE IF NOT EXISTS inventory_items (
@@ -44,19 +55,19 @@ def init_db() -> None:
         )
 
 
-def seed_db() -> None:
+def seed_db(db_path: Path | str | None = None) -> None:
     sample_items = [
         ("SKU-1001", "Barcode Scanner", "Electronics", 8, 3, "Aisle 1", "Shared scanner pool"),
         ("SKU-1002", "Thermal Labels", "Stationery", 120, 50, "Aisle 4", "50mm x 25mm rolls"),
         ("SKU-1003", "Packing Tape", "Packaging", 22, 25, "Aisle 2", "Low stock example"),
     ]
 
-    with get_connection() as connection:
+    with get_connection(db_path) as connection:
         for item in sample_items:
             connection.execute(
                 """
                 INSERT OR IGNORE INTO inventory_items
-                    (sku, name, category, quantity, reorder_level, location, notes)
+                  (sku, name, category, quantity, reorder_level, location, notes)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
                 item,

@@ -50,7 +50,9 @@
 
 ## Planning Achievements
 
-- Implementation and test planning docs are maintained in Confluence, not in this repository. There is no `plan/` folder on `main`.
+- Planning docs are maintained in-repo under `plan/`.
+  - `plan/implementation-plan.md`
+  - `plan/test-plan.md`
 
 ## Verification Completed
 

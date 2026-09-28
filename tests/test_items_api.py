@@ -1,9 +1,21 @@
-def test_list_items_non_empty_after_seed(client):
+def test_list_items_includes_created_item(client):
+    payload = {
+        "sku": "SKU-2000",
+        "name": "Notebook",
+        "category": "Stationery",
+        "quantity": 5,
+        "reorder_level": 1,
+        "location": "Aisle 1",
+        "notes": "",
+    }
+    create = client.post("/api/items", json=payload)
+    assert create.status_code == 201
+
     resp = client.get("/api/items")
     assert resp.status_code == 200
     data = resp.json()
     assert isinstance(data, list)
-    assert len(data) >= 1
+    assert any(item["sku"] == payload["sku"] for item in data)
 
 
 def test_create_item_happy_path(client):
@@ -71,7 +83,8 @@ def test_patch_item_updates_fields(client):
 
     list_resp = client.get("/api/items")
     assert list_resp.status_code == 200
-    found = [i for i in list_resp.json() if i["id"] == item_id][0]
+    found = next((i for i in list_resp.json() if i["id"] == item_id), None)
+    assert found is not None
     assert found["quantity"] == 9
 
 
@@ -125,6 +138,9 @@ def test_delete_item_204_and_removed(client):
     ids = [item["id"] for item in list_resp.json()]
     assert item_id not in ids
 
+    second_delete = client.delete(f"/api/items/{item_id}")
+    assert second_delete.status_code == 404
+
 
 
 def test_delete_item_unknown_returns_404(client):
@@ -145,12 +161,32 @@ def test_search_filters_results(client):
             "notes": "",
         },
     )
+    client.post(
+        "/api/items",
+        json={
+            "sku": "SKU-2006B",
+            "name": "Non-matching Widget",
+            "category": "Misc",
+            "quantity": 1,
+            "reorder_level": 1,
+            "location": "A1",
+            "notes": "",
+        },
+    )
 
     resp = client.get("/api/items", params={"search": "xyz123"})
     assert resp.status_code == 200
     results = resp.json()
     assert len(results) >= 1
-    assert any("xyz123" in item["name"] for item in results)
+    assert all("xyz123" in item["name"] for item in results)
+    assert any(item["sku"] == "SKU-2006" for item in results)
+    assert not any(item["sku"] == "SKU-2006B" for item in results)
+
+
+def test_search_with_no_matches_returns_empty_list(client):
+    resp = client.get("/api/items", params={"search": "no-such-item-qqq999"})
+    assert resp.status_code == 200
+    assert resp.json() == []
 
 
 
@@ -167,9 +203,23 @@ def test_low_stock_filters_results(client):
             "notes": "",
         },
     )
+    client.post(
+        "/api/items",
+        json={
+            "sku": "SKU-2007B",
+            "name": "Well Stocked Widget",
+            "category": "Widgets",
+            "quantity": 50,
+            "reorder_level": 5,
+            "location": "A2",
+            "notes": "",
+        },
+    )
 
     resp = client.get("/api/items", params={"low_stock": "true"})
     assert resp.status_code == 200
     results = resp.json()
     assert len(results) >= 1
     assert all(item["quantity"] <= item["reorder_level"] for item in results)
+    assert any(item["sku"] == "SKU-2007" for item in results)
+    assert not any(item["sku"] == "SKU-2007B" for item in results)
