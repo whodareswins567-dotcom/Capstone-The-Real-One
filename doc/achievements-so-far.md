@@ -23,7 +23,7 @@
   - Updating inventory items.
   - Deleting inventory items.
 
- ## Frontend Achievements
+## Frontend Achievements
 
 - Created a plain HTML, CSS, and JavaScript frontend.
 - Added an inventory table.
