@@ -49,6 +49,40 @@ def test_create_item_duplicate_sku_returns_409(client):
 
 
 
+def test_patch_item_duplicate_sku_returns_409(client):
+    first = client.post(
+        "/api/items",
+        json={
+            "sku": "SKU-2010",
+            "name": "Hammer",
+            "category": "Tools",
+            "quantity": 20,
+            "reorder_level": 5,
+            "location": "Aisle 1",
+            "notes": "",
+        },
+    )
+    assert first.status_code == 201
+
+    second = client.post(
+        "/api/items",
+        json={
+            "sku": "SKU-2011",
+            "name": "Screwdriver",
+            "category": "Tools",
+            "quantity": 15,
+            "reorder_level": 5,
+            "location": "Aisle 1",
+            "notes": "",
+        },
+    )
+    assert second.status_code == 201
+    second_id = second.json()["id"]
+
+    patch = client.patch(f"/api/items/{second_id}", json={"sku": "SKU-2010"})
+    assert patch.status_code == 409
+
+
 def test_patch_item_updates_fields(client):
     create = client.post(
         "/api/items",
