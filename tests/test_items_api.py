@@ -180,6 +180,12 @@ def test_search_filters_results(client):
     assert not any(item["sku"] == "SKU-2006B" for item in results)
 
 
+def test_search_with_no_matches_returns_empty_list(client):
+    resp = client.get("/api/items", params={"search": "no-such-item-qqq999"})
+    assert resp.status_code == 200
+    assert resp.json() == []
+
+
 
 def test_low_stock_filters_results(client):
     client.post(

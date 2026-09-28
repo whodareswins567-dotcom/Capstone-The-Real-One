@@ -9,9 +9,9 @@ DEFAULT_DB_PATH = BASE_DIR / "inventory.db"
 
 def get_db_path() -> Path:
     """Resolve the SQLite DB path from INVENTORY_DB_PATH, falling back to
-    backend/inventory.db. Callers that need explicit isolation (e.g. tests,
-    via backend.main.create_app()) should pass a db_path directly to
-    get_connection()/init_db()/seed_db() instead of relying on this env var.
+    backend/inventory.db. Callers that need isolation should pass db_path
+    explicitly to get_connection()/init_db()/seed_db() instead of relying
+    on this env var.
     """
     db_path = os.environ.get("INVENTORY_DB_PATH")
     return Path(db_path) if db_path else DEFAULT_DB_PATH
