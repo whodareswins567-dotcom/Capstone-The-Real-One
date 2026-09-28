@@ -50,8 +50,8 @@
 
 ## Planning Achievements
 
-- Added an implementation plan.
-- Added a test plan.
+- Added an implementation plan (see `plan/implementation-plan.md`).
+- Added a test plan (see `plan/test-plan.md`).
 
 ## Verification Completed
 

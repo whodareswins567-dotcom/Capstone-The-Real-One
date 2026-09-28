@@ -33,8 +33,14 @@ FastAPI serves both the REST API and the static frontend. SQLite is used as a li
 - `backend/main.py`: API routes and frontend serving.
 - `backend/database.py`: database setup and seed data.
 - `backend/models.py`: request and response models.
+
 - `frontend/index.html`: UI page.
 - `frontend/styles.css`: UI styling.
+
 - `frontend/app.js`: frontend behavior and API calls.
+
 - `doc/`: documentation.
-- `plan/`: build notes and verification plan.
+
+- `plan/`: implementation and testing plans (added in CAP-34):
+  - `plan/implementation-plan.md`
+  - `plan/test-plan.md`
