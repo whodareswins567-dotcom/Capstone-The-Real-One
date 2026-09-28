@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from .auth import Role, require_roles
 from .database import get_connection, init_db, seed_db
 from .models import InventoryItem, InventoryItemCreate, InventoryItemUpdate
 
@@ -72,6 +73,7 @@ def list_items(
 @router.post("/api/items", response_model=InventoryItem, status_code=201)
 def create_item(
     payload: InventoryItemCreate,
+    _ = require_roles({Role.INVENTORY_OPERATOR, Role.SUPERVISOR, Role.ADMINISTRATOR}),
     db_path: Path | str | None = Depends(get_app_db_path),
 ) -> InventoryItem:
     try:
@@ -102,10 +104,12 @@ def create_item(
     return map_item(row)
 
 
+
 @router.patch("/api/items/{item_id}", response_model=InventoryItem)
 def update_item(
     item_id: int,
     payload: InventoryItemUpdate,
+    _ = require_roles({Role.INVENTORY_OPERATOR, Role.SUPERVISOR, Role.ADMINISTRATOR}),
     db_path: Path | str | None = Depends(get_app_db_path),
 ) -> InventoryItem:
     fields = payload.model_dump(exclude_unset=True)
@@ -138,12 +142,14 @@ def update_item(
 @router.delete("/api/items/{item_id}", status_code=204)
 def delete_item(
     item_id: int,
+    _ = require_roles({Role.SUPERVISOR, Role.ADMINISTRATOR}),
     db_path: Path | str | None = Depends(get_app_db_path),
 ) -> None:
     with get_connection(db_path) as connection:
         cursor = connection.execute("DELETE FROM inventory_items WHERE id = ?", (item_id,))
         if cursor.rowcount == 0:
             raise HTTPException(status_code=404, detail="Item not found")
+
 
 
 def create_app(db_path: Path | str | None = None) -> FastAPI:

@@ -8,11 +8,26 @@ This is an inventory management system built with:
 
 The implementation supports basic item listing, creation, editing, deletion, and a low-stock filter.
 
+## Authentication & Roles (CAP-44)
+Write endpoints require an API key and a role. Read endpoints remain public.
+
+### Required headers (for write endpoints)
+- `X-API-Key`: must match the env var `INVENTORY_API_KEY`
+- `X-User-Role`: one of:
+  - `inventory_operator`
+  - `supervisor`
+  - `administrator`
+
+### Permissions (write endpoints)
+- POST `/api/items`: inventory_operator, supervisor, administrator
+- PATCH `/api/items/{id}`: inventory_operator, supervisor, administrator
+- DELETE `/api/items/{id}`: supervisor, administrator
+
 ## Run Locally
 
 ```bash
 pip install -r requirements.txt
-uvicorn backend.main:app --reload
+INVENTORY_API_KEY=your-dev-key uvicorn backend.main:app --reload
 ```
 
 Open:
@@ -21,7 +36,6 @@ http://127.0.0.1:8000
 ```
 
 API docs:
-
 ```text
 http://127.0.0.1:8000/docs
 ```

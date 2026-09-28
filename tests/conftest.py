@@ -1,6 +1,31 @@
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def _auth_setup_monkeypatch(monkeypatch):
+    monkeypatch.setenv("INVENTORY_API_KEY", "test-key")
+
+    # no yield: it just runs before each test
+
+
+
+@pytest.fixture
+def auth_headers_operator():
+    return {"X-API-Key": "test-key", "X-User-Role": "inventory_operator"}
+
+
+
+@pytest.fixture
+def auth_headers_supervisor():
+    return {"X-API-Key": "test-key", "X-User-Role": "supervisor"}
+
+
+@pytest.fixture
+def auth_headers_admin():
+    return {"X-API-Key": "test-key", "X-User-Role": "administrator"}
+
+
+
 @pytest.fixture
 def client(tmp_path):
     """Create a test client backed by an isolated temp SQLite database.
