@@ -35,6 +35,8 @@ pip install -r requirements.txt -r requirements-dev.txt
 pytest -q
 ```
 
+The automated suite (`backend/tests/`) runs against an isolated temp SQLite DB and never touches `backend/inventory.db`. Outside of tests, the same isolation is available via env vars: `INVENTORY_DB_PATH` to point at a different DB file, and `INVENTORY_SEED_DB=0` to skip inserting the dev sample rows on startup.
+
 ## Project Structure
 
 ```text

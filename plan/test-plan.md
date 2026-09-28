@@ -8,7 +8,7 @@ Provide a minimal automated regression baseline for the FastAPI backend so that 
 
 - **Framework:** pytest + FastAPI `TestClient` (`httpx` under the hood).
 - **Location:** `backend/tests/`.
-- **Isolation:** `backend/tests/conftest.py` points `INVENTORY_DB_PATH` at a temporary SQLite file per test session and creates a fresh `TestClient`, so tests never read/write the dev database (`backend/inventory.db`).
+- **Isolation:** `backend/tests/conftest.py` monkeypatches `database.DB_PATH` to a temporary SQLite file per test and sets `database.SEED_ON_STARTUP` to `False` before creating a fresh `TestClient`, so tests never read/write the dev database (`backend/inventory.db`) or depend on its sample rows. The same isolation is available outside tests via the `INVENTORY_DB_PATH` and `INVENTORY_SEED_DB=0` env vars (see `plan/implementation-plan.md`).
 - **Run locally:**
 
   ```bash

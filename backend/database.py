@@ -43,7 +43,7 @@ def init_db() -> None:
                 WHERE id = OLD.id;
             END;
             """
-         )
+        )
 
 
 def seed_db() -> None:
