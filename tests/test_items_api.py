@@ -83,7 +83,8 @@ def test_patch_item_updates_fields(client):
 
     list_resp = client.get("/api/items")
     assert list_resp.status_code == 200
-    found = [i for i in list_resp.json() if i["id"] == item_id][0]
+    found = next((i for i in list_resp.json() if i["id"] == item_id), None)
+    assert found is not None
     assert found["quantity"] == 9
 
 
