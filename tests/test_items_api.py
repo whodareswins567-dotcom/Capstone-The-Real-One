@@ -163,7 +163,8 @@ def test_search_filters_results(client):
     assert resp.status_code == 200
     results = resp.json()
     assert len(results) >= 1
-    assert any("xyz123" in item["name"] for item in results)
+    assert all("xyz123" in item["name"] for item in results)
+    assert any(item["sku"] == "SKU-2006" for item in results)
 
 
 
@@ -186,3 +187,4 @@ def test_low_stock_filters_results(client):
     results = resp.json()
     assert len(results) >= 1
     assert all(item["quantity"] <= item["reorder_level"] for item in results)
+    assert any(item["sku"] == "SKU-2007" for item in results)

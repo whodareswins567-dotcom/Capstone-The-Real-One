@@ -15,6 +15,8 @@ def get_db_path() -> Path:
     db_path = os.environ.get("INVENTORY_DB_PATH")
     if db_path is None:
         if "PYTEST_CURRENT_TEST" in os.environ:
+            # PYTEST_CURRENT_TEST is set by pytest itself, only for the
+            # duration of an actual test run - not by app/production code.
             raise RuntimeError(
                 "INVENTORY_DB_PATH is not set while running under pytest; "
                 "tests must set it before importing backend.database/backend.main "
