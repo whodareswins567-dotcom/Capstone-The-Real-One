@@ -1,3 +1,7 @@
+# Rule: test modules must NOT import backend.main or backend.database at
+# module scope. Do those imports inside a test/fixture body, after
+# INVENTORY_DB_PATH has been set (see the `client` fixture below) — otherwise
+# the import can resolve get_db_path() against the default repo DB.
 import pytest
 
 
