@@ -1,7 +1,7 @@
 import pytest
 
 
-@@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True)
 def _auth_setup_monkeypatch(monkeypatch):
     monkeypatch.setenv("INVENTORY_API_KEY", "test-key")
 

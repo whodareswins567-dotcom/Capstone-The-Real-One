@@ -35,6 +35,7 @@ def test_create_item_is_committed_before_response_is_returned(tmp_path):
                 "location": "A1",
                 "notes": "",
             },
+            headers={"X-API-Key": "test-key", "X-User-Role": "inventory_operator"},
         )
 
     assert resp.status_code == 201

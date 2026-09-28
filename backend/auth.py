@@ -32,7 +32,7 @@ class Role(str, Enum):
 
 
 @dataclass
-`class Principal:
+class Principal:
     role: Role
 
 

@@ -3,7 +3,7 @@ import sqlite3
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, Request
-from fastapi.middleware.cors import CORSMIddleware
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -53,7 +53,7 @@ def list_items(
     clauses = []
 
     if search:
-        clauses.append("(sku LIKE ? OR name LIKE ? OR category LIKE ?))"
+        clauses.append("(sku LIKE ? OR name LIKE ? OR category LIKE ?)")
         term = f"%{search}%"
         params.extend([term, term, term])
 
@@ -61,7 +61,7 @@ def list_items(
         clauses.append("quantity <= reorder_level")
 
     if clauses:
-        sql += " WHERE" + " AND".join(clauses)
+        sql += " WHERE " + " AND ".join(clauses)
 
     sql += " ORDER BY updated_at DESC, id DESC"
 
@@ -173,7 +173,7 @@ def create_app(db_path: Path | str | None = None) -> FastAPI:
         title="Inventory Management System",
         description="Partially implemented inventory API with intentional gaps.",
         version="0.1.0",
-        lifespan=lifespan,\
+        lifespan=lifespan,
     )
     app.state.db_path = db_path
 

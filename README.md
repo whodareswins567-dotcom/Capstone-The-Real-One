@@ -20,7 +20,7 @@ Write endpoints require an API key and a role. Read endpoints remain public.
 
 ### Permissions (write endpoints)
 - POST `/api/items`: inventory_operator, supervisor, administrator
- - PATCH `/api/items/{id}`: inventory_operator, supervisor, administrator
+- PATCH `/api/items/{id}`: inventory_operator, supervisor, administrator
 - DELETE `/api/items/{id}`: supervisor, administrator
 
 ## Run Locally
@@ -48,9 +48,9 @@ pytest -q
 ```
 
 CI runs `pytest -q` directly (not `python -m pytest`), so `pytest.ini` pins
-``pythonpath = .` and `testpaths = tests` — otherwise `tests/conftest.py`'s
-``import backend.database` fails to resolve under a bare `pytest` invocation,
-ond discovery could pick up stray test-like files outside `tests/`.
+`pythonpath = .` and `testpaths = tests` — otherwise `tests/conftest.py`'s
+`import backend.database` fails to resolve under a bare `pytest` invocation,
+and discovery could pick up stray test-like files outside `tests/`.
 
 ## Project Structure
 
