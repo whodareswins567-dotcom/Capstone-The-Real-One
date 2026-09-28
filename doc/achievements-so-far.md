@@ -50,8 +50,7 @@
 
 ## Planning Achievements
 
-- Added an implementation plan.
-- Added a test plan.
+- Implementation and test planning docs are maintained in Confluence, not in this repository. There is no `plan/` folder on `main`.
 
 ## Verification Completed
 
