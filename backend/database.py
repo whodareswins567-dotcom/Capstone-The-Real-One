@@ -1,9 +1,11 @@
 from pathlib import Path
+import os
 import sqlite3
 
 
 BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "inventory.db"
+# Allow tests (and other envs) to override the DB path; default keeps existing behavior.
+DB_PATH = Path(os.environ.get("INVENTORY_DB_PATH", str(BASE_DIR / "inventory.db")))
 
 
 def get_connection() -> sqlite3.Connection:
