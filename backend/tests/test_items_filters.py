@@ -1,21 +1,6 @@
-def _create_item(client, sku: str, **kwargs):
-    payload = {
-        "sku": sku,
-        "name": kwargs.get("name", "Test Item"),
-        "category": kwargs.get("category", "Test"),
-        "quantity": kwargs.get("quantity", 10),
-        "reorder_level": kwargs.get("reorder_level", 2),
-        "location": kwargs.get("location", "A1"),
-        "notes": kwargs.get("notes", ""),
-    }
-    response = client.post("/api/items", json=payload)
-    assert response.status_code == 201
-    return response.json()
-
-
-def test_search_filter_by_sku_name_category(client):
-    _create_item(client, "SEARCH-SKU-1", name="Magazine", category="Media")
-    _create_item(client, "OTHER-SKU-2", name="Toolbox", category="Hardware")
+def test_search_filter_by_sku_name_category(client, create_item):
+    create_item("SEARCH-SKU-1", name="Magazine", category="Media")
+    create_item("OTHER-SKU-2", name="Toolbox", category="Hardware")
 
     resp = client.get("/api/items?search=MAGa")
     assert resp.status_code == 200
@@ -24,9 +9,9 @@ def test_search_filter_by_sku_name_category(client):
     assert not any(item["sku"] == "OTHER-SKU-2" for item in items)
 
 
-def test_low_stock_filter_returns_only_quantity_le_reorder_level(client):
-    low = _create_item(client, "LOW-STOCK-1", quantity=1, reorder_level=2)
-    high = _create_item(client, "HIGH-STOCK-2", quantity=5, reorder_level=2)
+def test_low_stock_filter_returns_only_quantity_le_reorder_level(client, create_item):
+    create_item("LOW-STOCK-1", quantity=1, reorder_level=2)
+    create_item("HIGH-STOCK-2", quantity=5, reorder_level=2)
 
     resp = client.get("/api/items?low_stock=true")
     assert resp.status_code == 200
