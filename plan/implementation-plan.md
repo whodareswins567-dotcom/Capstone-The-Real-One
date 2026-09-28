@@ -5,5 +5,5 @@ This plan exists to make the repository self-contained and consistent with docum
 - Linked Jira: CAP-34 - https://rahul-kumar-8.atlassian.net/browse/CAP-34
 
 ## Goals
-- Reconcile documentation that claims a `plan?` folder exists with the actual repo contents.
+- Reconcile documentation that claims a `plan/` folder exists with the actual repo contents.
 - Provide a minimal, useful implementation/extension outline.

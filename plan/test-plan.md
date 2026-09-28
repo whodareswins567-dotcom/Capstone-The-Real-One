@@ -30,13 +30,13 @@ uvicorn backend.main:app --reload
 ## Manual Smoke Checklist
 
 ### Backend (API)
-- [ ] GET `/health` returns HTTP 200
-- [ ] GET ``/api/items` (route name per `scrutiny in doc/api-reference.md`)
+- [ ] GET `/api/health` returns HTTP 200
+- [ ] GET `/api/items`
   - expects a JSON array of items
 - [ ] POST create item
   - validation fails on missing required fields
   - succeeds with valid payload
-- [ ] PUT\/PATCH item update
+- [ ] PATCH item update
 - [ ] DELETE item
 - [ ] Session restart: data persists in SQLite file (if designed that way)
 
@@ -45,7 +45,7 @@ uvicorn backend.main:app --reload
 - [ ] Item list loads and displays in table
 - [ ] Search filter works
 - [ ] Low-stock filter works
-- [ ] Greate an item from UI and see it appear in the list
+- [ ] Create an item from UI and see it appear in the list
 - [ ] Edit an item from UI and see change reflect
 - [ ] Delete an item from UI and see it removed
 
