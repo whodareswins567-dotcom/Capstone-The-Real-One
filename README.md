@@ -10,6 +10,8 @@ The implementation supports basic item listing, creation, editing, deletion, and
 
 ## Run Locally
 
+`requirements.txt` lists runtime dependencies only; `requirements-dev.txt` adds test-only dependencies (pytest, httpx, pytest-cov) on top of it.
+
 ```bash
 pip install -r requirements.txt
 uvicorn backend.main:app --reload
@@ -33,11 +35,13 @@ pip install -r requirements.txt -r requirements-dev.txt
 pytest -q
 ```
 
+The automated suite (`backend/tests/`) runs against an isolated temp SQLite DB and never touches `backend/inventory.db`. Outside of tests, the same isolation is available via env vars: `INVENTORY_DB_PATH` to point at a different DB file, and `INVENTORY_SEED_DB=0` to skip inserting the dev sample rows on startup.
+
 ## Project Structure
 
 ```text
-backend/   FastAPI application and SQLite access
-frontend/  Static HTML/CSS/JS user interface
-doc/       High-level, low-level, architecture, and Confluence docs
-tests/     Automated tests
+backend/       FastAPI application, SQLite access, and automated tests (backend/tests/)
+frontend/      Static HTML/CSS/JS user interface
+doc/           High-level, low-level, architecture, and Confluence docs
+plan/          Implementation plan and test plan
 ```
