@@ -15,9 +15,13 @@ def client(tmp_path, monkeypatch):
     db_path = tmp_path / "test-inventory.db"
 
     db = importlib.import_module("backend.database")
+    default_db_path = db.BASE_DIR / "inventory.db"
+
+    # Redirect DB_PATH BEFORE any app code creates connections.
     monkeypatch.setattr(db, "DB_PATH", db_path)
 
-    # paranoia: ensure we don't touch the repo-checked-in DB.
+    # Guard: tests must not touch the repo default DB.
+    assert db.DB_PATH != default_db_path
     assert "test-inventory.db" in str(db.DB_PATH)
 
     db.init_db()
