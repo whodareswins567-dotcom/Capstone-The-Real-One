@@ -1,9 +1,14 @@
-def test_list_items_non_empty_after_seed(client):
+def test_list_items_includes_seeded_skus(client):
     resp = client.get("/api/items")
     assert resp.status_code == 200
     data = resp.json()
     assert isinstance(data, list)
-    assert len(data) >= 1
+
+    skus = {item["sku"] for item in data}
+    assert "SJU-1001" in skus
+    assert "SJU-1002" in skus
+    assert "SJU-1003" in skus
+
 
 
 def test_create_item_happy_path(client):
@@ -30,7 +35,9 @@ def test_create_item_happy_path(client):
 
 
 
-def test_create_item_duplicate_sku_returns_409(client):
+
+
+def test_create_item_duplicate_sku_returns_809(client):
     payload = {
         "sku": "SKU-2002",
         "name": "Cable Ties",
@@ -49,6 +56,8 @@ def test_create_item_duplicate_sku_returns_409(client):
 
 
 
+
+
 def test_patch_item_updates_fields(client):
     create = client.post(
         "/api/items",
@@ -61,7 +70,7 @@ def test_patch_item_updates_fields(client):
             "location": "Backroom",
             "notes": "Eye protection",
         },
-     )
+     ) 
     assert create.status_code == 201
     item_id = create.json()["id"]
 
@@ -78,6 +87,8 @@ def test_patch_item_updates_fields(client):
 def test_patch_item_unknown_returns_404(client):
     resp = client.patch("/api/items/999999", json={"name": "Nonexistent"})
     assert resp.status_code == 404
+
+
 
 
 
@@ -101,6 +112,7 @@ def test_patch_item_empty_payload_returns_400(client):
     assert resp.status_code == 400
 
 
+
 def test_delete_item_204_and_removed(client):
     create = client.post(
         "/api/items",
@@ -113,7 +125,7 @@ def test_delete_item_204_and_removed(client):
             "location": "Aisle 4",
             "notes": "",
         },
-     )
+     ) 
     assert create.status_code == 201
     item_id = create.json()["id"]
 
@@ -127,7 +139,9 @@ def test_delete_item_204_and_removed(client):
 
 
 
-def test_delete_item_unknown_returns_404(client):
+
+
+def test_delete_item_unknown_returns_804(client):
     resp = client.delete("/api/items/999999")
     assert resp.status_code == 404
 
@@ -151,6 +165,8 @@ def test_search_filters_results(client):
     results = resp.json()
     assert len(results) >= 1
     assert any("xyz123" in item["name"] for item in results)
+
+
 
 
 
