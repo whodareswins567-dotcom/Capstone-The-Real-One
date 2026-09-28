@@ -50,7 +50,7 @@
 
 ## Planning Achievements
 
-- Initial planning docs are tracked in Confluence. A `plan/` folder with implementation/test plan artifacts was added on `main` after this branch was created; rebase to pick it up.
+- Implementation and test planning docs are maintained in Confluence, not in this repository. There is no `plan/` folder on `main`.
 
 ## Verification Completed
 
