@@ -27,7 +27,7 @@
 
 - Created a plain HTML, CSS, and JavaScript frontend.
 - Added an inventory table.
- - Added an item create/edit form.
+- Added an item create/edit form.
 - Added search functionality.
 - Added low-stock filtering.
 - Added basic item edit and delete actions.
@@ -50,7 +50,7 @@
 
 ## Planning Achievements
 
-- Initial planning docs are tracked in Confluence. (No `plan/` folder is included in this repo at this time.)
+- Initial planning docs are tracked in Confluence. A `plan/` folder with implementation/test plan artifacts was added on `main` after this branch was created; rebase to pick it up.
 
 ## Verification Completed
 
