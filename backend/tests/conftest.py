@@ -1,5 +1,5 @@
 import importlib
-import os
+import sys
 from pathlib import Path
 
 path_env_var = "INVENTORY_DB_PATH"
@@ -24,17 +24,20 @@ def _set_test_db_env(temp_db_path: Path, monkeypatch: pytest.MonkeyPatch):
 
 
 @pytest.fixture()
-def client() -> TestClient:
+def client():
     """
     Returns a TestClient that uses a temporary SQLite database.
     We import the app after the env var is set to ensure db
     path override is applied at import time.
     """
-    # Reimport modules to apply DN override if they were cached
-    if "backend.database" in importlib.sys.modules:
+    # Reimport modules to apply DB path override if they were cached
+    if "backend.database" in sys.modules:
         importlib.reload(importlib.import_module("backend.database"))
-    if "backend.main" in importlib.sys.modules:
+    if "backend.main" in sys.modules:
         importlib.reload(importlib.import_module("backend.main"))
     from backend.main import app
 
-    return TestClient(app)
+    # Lifespan (which creates the schema via init_db/seed_db) only runs
+    # when TestClient is used as a context manager.
+    with TestClient(app) as test_client:
+        yield test_client

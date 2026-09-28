@@ -1,11 +1,11 @@
-def _create_item(client, sku: str, *, **kwargs):
+def _create_item(client, sku: str, **kwargs):
     payload = {
         "sku": sku,
         "name": kwargs.get("name", "Test Item"),
         "category": kwargs.get("category", "Test"),
         "quantity": kwargs.get("quantity", 10),
         "reorder_level": kwargs.get("reorder_level", 2),
-        "location": kwargs.get("location", "A"),
+        "location": kwargs.get("location", "A1"),
         "notes": kwargs.get("notes", ""),
     }
     return client.post("/api/items", json=payload)
