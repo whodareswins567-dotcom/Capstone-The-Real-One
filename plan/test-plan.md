@@ -27,4 +27,4 @@ pytest -q
 ## CI (GitHub Actions)
 
 - Workflow: `.github/workflows/ci.yml`
-- Triggers: on `pull_request` to `main  and on `push` to any branch.
+- Triggers: `pull_request` targeting `main`, and `push` to any branch.

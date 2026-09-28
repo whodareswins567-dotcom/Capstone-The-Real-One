@@ -1,9 +1,21 @@
-def test_list_items_non_empty_after_seed(client):
+def test_list_items_includes_created_item(client):
+    payload = {
+        "sku": "SKU-2000",
+        "name": "Notebook",
+        "category": "Stationery",
+        "quantity": 5,
+        "reorder_level": 1,
+        "location": "Aisle 1",
+        "notes": "",
+    }
+    create = client.post("/api/items", json=payload)
+    assert create.status_code == 201
+
     resp = client.get("/api/items")
     assert resp.status_code == 200
     data = resp.json()
     assert isinstance(data, list)
-    assert len(data) >= 1
+    assert any(item["sku"] == payload["sku"] for item in data)
 
 
 def test_create_item_happy_path(client):

@@ -5,7 +5,7 @@ This document exists to reconcile the repo documentation with the actual repo st
 ## Goals
 
 - Add automated tests for core backend FastAPI endpoints (health, items CRUD).
-- Add CI (GitHub Actions) to run `pytest -q` on PUs.
+- Add CI (GitHub Actions) to run `pytest -q` on PRs.
 - Resolve docs mismatches about a missing `plan/` folder.
 
 ## Approach

@@ -7,14 +7,16 @@ BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_DB_PATH = BASE_DIR / "inventory.db"
 
 
-# Allow overriding the DB location for tests and deployments.
-# If not set, defaults to backend/inventory.db (existing behavior).
-#DB_PATH must be a file path for SQLite.
-DB_PATH = Path(os.environ.get("INVENTORY_DB_PATH", str(DEFAULT_DB_PATH)))
+def get_db_path() -> Path:
+    """Resolve the SQLite DB path at call time (not import time), so
+    tests can override INVENTORY_DB_PATH via monkeypatch without
+    needing importlib.reload. Falls back to backend/inventory.db.
+    """
+    return Path(os.environ.get("INVENTORY_DB_PATH", str(DEFAULT_DB_PATH)))
 
 
 def get_connection() -> sqlite3.Connection:
-    connection = sqlite3.connect(DB_PATH)
+    connection = sqlite3.connect(get_db_path())
     connection.row_factory = sqlite3.Row
     return connection
 
