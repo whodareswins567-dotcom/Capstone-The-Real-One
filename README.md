@@ -10,7 +10,7 @@ The implementation supports basic item listing, creation, editing, deletion, and
 
 ## Run Locally
 
-```bash
+``ash
 pip install -r requirements.txt
 uvicorn backend.main:app --reload
 ```
@@ -41,3 +41,4 @@ frontend/  Static HTML/CSS/JS user interface
 doc/       High-level, low-level, architecture, and Confluence docs
 tests/     Automated tests
 ```
+
