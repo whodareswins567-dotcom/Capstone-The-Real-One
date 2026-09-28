@@ -12,7 +12,16 @@ def get_db_path() -> Path:
     tests can override INVENTORY_DB_PATH via monkeypatch without
     needing importlib.reload. Falls back to backend/inventory.db.
     """
-    return Path(os.environ.get("INVENTORY_DB_PATH", str(DEFAULT_DB_PATH)))
+    db_path = os.environ.get("INVENTORY_DB_PATH")
+    if db_path is None:
+        if "PYTEST_CURRENT_TEST" in os.environ:
+            raise RuntimeError(
+                "INVENTORY_DB_PATH is not set while running under pytest; "
+                "tests must set it before importing backend.database/backend.main "
+                "to avoid touching the default repo DB."
+            )
+        return DEFAULT_DB_PATH
+    return Path(db_path)
 
 
 def get_connection() -> sqlite3.Connection:

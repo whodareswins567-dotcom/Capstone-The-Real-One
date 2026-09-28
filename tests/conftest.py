@@ -20,7 +20,6 @@ def client(tmp_path, monkeypatch):
     assert "test-inventory.db" in str(db.get_db_path())
 
     db.init_db()
-    db.seed_db()
 
     from fastapi.testclient import TestClient
 
