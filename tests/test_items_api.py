@@ -46,6 +46,7 @@ def test_create_item_duplicate_sku_returns_409(client):
 
     second = client.post("/api/items", json=payload)
     assert second.status_code == 409
+    assert second.json()["detail"] == "SKU already exists"
 
 
 
