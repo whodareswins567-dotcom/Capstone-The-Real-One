@@ -3,8 +3,8 @@
 ## Project Setup
 
 - Created the inventory management project structure.
-- Added separate folders for backend, frontend, documentation, and planning.
-- Added `requirements.txt` for Python dependencies.
+ - Added separate folders for backend, frontend, documentation, and planning.
+ - Added `requirements.txt` for Python dependencies.
 - Added `README.md` with local run instructions and project overview.
 
 ## Backend Achievements
@@ -28,10 +28,10 @@
 - Created a plain HTML, CSS, and JavaScript frontend.
 - Added an inventory table.
 - Added an item create/edit form.
-- Added search functionality.
+ - Added search functionality.
 - Added low-stock filtering.
-- Added basic item edit and delete actions.
-- Added responsive styling for desktop and smaller screens.
+ - Added basic item edit and delete actions.
+ - Added responsive styling for desktop and smaller screens.
 
 ## Database Achievements
 
@@ -44,14 +44,18 @@
 
 - Added high-level design documentation.
 - Added low-level design documentation.
-- Added architecture documentation.
+ - Added architecture documentation.
 - Added API reference documentation.
 - Added a Confluence-ready summary document.
 
-## Planning Achievements
+## Planning & Testing Achievements
 
-- Added an implementation plan.
-- Added a test plan.
+- Added `plan/` documents:
+  - `plan/implementation-plan.md`
+  - `plan/test-plan.md`
+- Added a minimal automated test baseline using `pytest`:
+  - `backend/tests/test_health.py` covers `GET /api/health`
+  - `backend/tests/test_items.py` covers `GET /api/items` and `POST /api/items`
 
 ## Verification Completed
 
