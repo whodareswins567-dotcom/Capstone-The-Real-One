@@ -1,3 +1,6 @@
+# Documentation-only spec: no behave/pytest-bdd runner is configured for this
+# repo. The actual executable coverage lives in backend/tests/ (pytest). This
+# file exists purely as a human-readable traceability doc for CAP-35.
 @CAP-35 @api @backend @regression
 Feature: FastAPI inventory items API
   In order to prevent regressions in the inventory backend

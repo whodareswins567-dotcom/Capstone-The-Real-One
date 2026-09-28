@@ -27,3 +27,7 @@ def test_delete_item_success(client, create_item):
     item_id = create.json()["id"]
     response = client.delete(f"/api/items/{item_id}")
     assert response.status_code == 204
+
+    list_response = client.get("/api/items")
+    assert list_response.status_code == 200
+    assert not any(item["id"] == item_id for item in list_response.json())
