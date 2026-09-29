@@ -1,4 +1,4 @@
-def test_list_items_includes_created_item(client):
+def test_list_items_includes_created_item(client, headers):
     payload = {
         "sku": "SKU-2000",
         "name": "Notebook",
@@ -8,7 +8,7 @@ def test_list_items_includes_created_item(client):
         "location": "Aisle 1",
         "notes": "",
     }
-    create = client.post("/api/items", json=payload)
+    create = client.post("/api/items", json=payload, headers=headers["admin"])
     assert create.status_code == 201
 
     resp = client.get("/api/items")
@@ -18,7 +18,7 @@ def test_list_items_includes_created_item(client):
     assert any(item["sku"] == payload["sku"] for item in data)
 
 
-def test_create_item_happy_path(client):
+def test_create_item_happy_path(client, headers):
     payload = {
         "sku": "SKU-2001",
         "name": "Gloves",
@@ -29,7 +29,7 @@ def test_create_item_happy_path(client):
         "notes": "Then first aid gloves",
     }
 
-    resp = client.post("/api/items", json=payload)
+    resp = client.post("/api/items", json=payload, headers=headers["admin"])
     assert resp.status_code == 201
     created = resp.json()
     assert created["sku"] == payload["sku"]
@@ -42,7 +42,7 @@ def test_create_item_happy_path(client):
 
 
 
-def test_create_item_duplicate_sku_returns_409(client):
+def test_create_item_duplicate_sku_returns_409(client, headers):
     payload = {
         "sku": "SKU-2002",
         "name": "Cable Ties",
@@ -53,15 +53,15 @@ def test_create_item_duplicate_sku_returns_409(client):
         "notes": "Plastic ties",
     }
 
-    first = client.post("/api/items", json=payload)
+    first = client.post("/api/items", json=payload, headers=headers["admin"])
     assert first.status_code == 201
 
-    second = client.post("/api/items", json=payload)
+    second = client.post("/api/items", json=payload, headers=headers["admin"])
     assert second.status_code == 409
 
 
 
-def test_patch_item_updates_fields(client):
+def test_patch_item_updates_fields(client, headers):
     create = client.post(
         "/api/items",
         json={
@@ -73,11 +73,12 @@ def test_patch_item_updates_fields(client):
             "location": "Backroom",
             "notes": "Eye protection",
         },
+        headers=headers["admin"],
      )
     assert create.status_code == 201
     item_id = create.json()["id"]
 
-    patch = client.patch(f"/api/items/{item_id}", json={"quantity": 9})
+    patch = client.patch(f"/api/items/{item_id}", json={"quantity": 9}, headers=headers["admin"])
     assert patch.status_code == 200
     assert patch.json()["quantity"] == 9
 
@@ -88,13 +89,13 @@ def test_patch_item_updates_fields(client):
     assert found["quantity"] == 9
 
 
-def test_patch_item_unknown_returns_404(client):
-    resp = client.patch("/api/items/999999", json={"name": "Nonexistent"})
+def test_patch_item_unknown_returns_404(client, headers):
+    resp = client.patch("/api/items/999999", json={"name": "Nonexistent"}, headers=headers["admin"])
     assert resp.status_code == 404
 
 
 
-def test_patch_item_empty_payload_returns_400(client):
+def test_patch_item_empty_payload_returns_400(client, headers):
     create = client.post(
         "/api/items",
         json={
@@ -106,15 +107,16 @@ def test_patch_item_empty_payload_returns_400(client):
             "location": "Aisle 2",
             "notes": "",
         },
+        headers=headers["admin"],
     )
     assert create.status_code == 201
     item_id = create.json()["id"]
 
-    resp = client.patch(f"/api/items/{item_id}", json={})
+    resp = client.patch(f"/api/items/{item_id}", json={}, headers=headers["admin"])
     assert resp.status_code == 400
 
 
-def test_delete_item_204_and_removed(client):
+def test_delete_item_204_and_removed(client, headers):
     create = client.post(
         "/api/items",
         json={
@@ -126,11 +128,12 @@ def test_delete_item_204_and_removed(client):
             "location": "Aisle 4",
             "notes": "",
         },
+        headers=headers["admin"],
      )
     assert create.status_code == 201
     item_id = create.json()["id"]
 
-    delete_resp = client.delete(f"/api/items/{item_id}")
+    delete_resp = client.delete(f"/api/items/{item_id}", headers=headers["admin"])
     assert delete_resp.status_code == 204
 
     list_resp = client.get("/api/items")
@@ -138,17 +141,17 @@ def test_delete_item_204_and_removed(client):
     ids = [item["id"] for item in list_resp.json()]
     assert item_id not in ids
 
-    second_delete = client.delete(f"/api/items/{item_id}")
+    second_delete = client.delete(f"/api/items/{item_id}", headers=headers["admin"])
     assert second_delete.status_code == 404
 
 
 
-def test_delete_item_unknown_returns_404(client):
-    resp = client.delete("/api/items/999999")
+def test_delete_item_unknown_returns_404(client, headers):
+    resp = client.delete("/api/items/999999", headers=headers["admin"])
     assert resp.status_code == 404
 
 
-def test_search_filters_results(client):
+def test_search_filters_results(client, headers):
     client.post(
         "/api/items",
         json={
@@ -160,6 +163,7 @@ def test_search_filters_results(client):
             "location": "A1",
             "notes": "",
         },
+        headers=headers["admin"],
     )
     client.post(
         "/api/items",
@@ -172,6 +176,7 @@ def test_search_filters_results(client):
             "location": "A1",
             "notes": "",
         },
+        headers=headers["admin"],
     )
 
     resp = client.get("/api/items", params={"search": "xyz123"})
@@ -190,7 +195,7 @@ def test_search_with_no_matches_returns_empty_list(client):
 
 
 
-def test_low_stock_filters_results(client):
+def test_low_stock_filters_results(client, headers):
     client.post(
         "/api/items",
         json={
@@ -202,6 +207,7 @@ def test_low_stock_filters_results(client):
             "location": "A2",
             "notes": "",
         },
+        headers=headers["admin"],
     )
     client.post(
         "/api/items",
@@ -214,6 +220,7 @@ def test_low_stock_filters_results(client):
             "location": "A2",
             "notes": "",
         },
+        headers=headers["admin"],
     )
 
     resp = client.get("/api/items", params={"low_stock": "true"})
