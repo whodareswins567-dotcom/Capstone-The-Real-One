@@ -58,16 +58,16 @@ export IMS_ADMIN_BOOTSTRAP_PASSWORD="change-me-immediately"
 uvicorn backend.main:app --reload
 ```
 
-This only ever runs while the `users` table has zero rows, so it cannot be
+This only ever runs while the `users`
+table has zero rows, so it cannot be
 used to reset or overwrite an existing admin - once at least one user
 exists, provision further users directly via the database (there is
 intentionally no user-management endpoint in this ticket's scope).
 
 ### Logging in
-
 ```bash
-curl -s -X POST http://127.0.0.1:8000/api/auth/login \
-  -H "Content-Type: application/json" \
+curl -s -X POST http://127.0.0.1:8000/api/auth/login \\
+  -H "Content-Type: application/json" \\
   -d '{"username": "admin", "password": "change-me-immediately"}'
 ```
 
@@ -84,14 +84,13 @@ Response:
 ### Calling a protected endpoint
 
 ```bash
-curl -s -X POST http://127.0.0.1:8000/api/items \
-  -H "Authorization: Bearer <jwt>" \
-  -H "Content-Type: application/json" \
+curl -s -X POST http://127.0.0.1:8000/api/items \\
+  -H "Authorization: Bearer <jwt>" \\
+  -H "Content-Type: application/json" \\
   -d '{"sku": "SKU-2001", "name": "Shipping Box", "category": "Packaging", "quantity": 40, "reorder_level": 10, "location": "Aisle 2", "notes": ""}'
 ```
 
 ### Logging out / revocation
-
 Tokens are JWTs signed with a server-side secret and carry a unique `jti`
 claim. `POST /api/auth/logout` (with the token to invalidate in the
 `Authorization` header) records that `jti` in the `revoked_tokens` table;
