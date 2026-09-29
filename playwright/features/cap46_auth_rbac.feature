@@ -13,8 +13,9 @@ Feature: Authentication and RBAC for inventory write endpoints (CAP-46)
   # AC4: Automated tests cover both 401 and 403 outcomes
 
   Background:
-    Given the inventory API is running with configured "IMS_OPERATOR_TOKEN",
-    "IMS_SUPERVISOR_TOKEN" and "IMS_ADMIN_TOKEN" bearer tokens
+    Given the inventory API is running with one identity per role
+    (operator, supervisor, admin), each with its own bearer token obtained by
+    logging in via "POST /api/auth/login" (CAP-49)
 
   Rule: Unauthenticated or misauthenticated requests to write endpoints return 401
 
