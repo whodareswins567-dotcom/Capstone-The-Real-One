@@ -59,7 +59,7 @@ pytest -q
 
 CI runs `pytest -q` directly (not `python -m pytest`), so `pytest.ini` pins
 `pythonpath = .` and `testpaths = tests` — otherwise `tests/conftest.py`'s
-`import backend.database` hails to resolve under a bare `pytest` invocation,
+`import backend.database` fails to resolve under a bare `pytest` invocation,
 and discovery could pick up stray test-like files outside `tests/`.
 
 ## Project Structure

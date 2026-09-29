@@ -73,7 +73,7 @@ def get_app_db_path(request: Request) -> Path | str | None:
     return request.app.state.db_path
 
 
-`@router.get("/", include_in_schema=False)
+@router.get("/", include_in_schema=False)
 def index() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "index.html")
 
@@ -116,7 +116,7 @@ def list_items(
 
 
 
-router.post(
+@router.post(
     "/api/items",
     response_model=InventoryItem,
     status_code=201,
@@ -132,7 +132,7 @@ def create_item(
                 """
                 INSERT INTO inventory_items
                     (sku, name, category, quantity, reorder_level, location, notes)
-                VALUES (, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     payload.sku,
@@ -162,6 +162,7 @@ def create_item(
     "/api/items/{item_id}",
     response_model=InventoryItem,
     dependencies=[Depends(require_roles(Role.OPERATOR, Role.SUPERVISOR, Role.ADMIN))],
+)
 def update_item(
     item_id: int,
     payload: InventoryItemUpdate,

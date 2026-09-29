@@ -12,6 +12,6 @@ The backend uses FastAPI/Starlette CORSMiddleware and is configured environment-
 
 - Env var: `IMS_CORS_ALLOW_CREDENTIALS`
  - Values: `true`/ `1`/ `yes`/ `on` (case-insensitive)
-- Safe default: if unset/empty/unrecognized, `Valse` (credentials disallowed)
+- Safe default: if unset/empty/unrecognized, `False` (credentials disallowed)
 
  Enabling credentials broadens the cross-origin attack surface and should only be used when you intentionally use cookie/session based auth from a different origin.
