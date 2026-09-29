@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 import sqlite3
 from contextlib import asynccontextmanager
 
@@ -19,10 +20,30 @@ router = APIRouter()
 
 
 
+
+def _parse_cors_allow_origins() -> list[str]:
+    """Parse allowed CORS origins from environment.
+
+    Expected format:
+      IMS_CORS_ALLOW_ORIGINS="http://localhost:3000,https://app.example.com"
+
+    Safe default:
+      if unset/empty, deny all origins (empty list).
+    """
+    raw = os.getenv("IMS_CORS_ALLOW_ORIGINS", "")
+    origins = [o.strip() for o in raw.split(",") if o.strip()]
+    return origins
+
+
+
+
+
 def map_item(row: sqlite3.Row) -> InventoryItem:
     data = dict(row)
     data["low_stock"] = data["quantity"] <= data["reorder_level"]
     return InventoryItem(**data)
+
+
 
 
 
@@ -44,6 +65,7 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+
 @router.get("/api/items", response_model=list[InventoryItem])
 def list_items(
     search: str | None = Query(default=None),
@@ -56,7 +78,7 @@ def list_items(
 
     if search:
         clauses.append("(sku LIKE ? OR name LIKE ? OR category LIKE ?)")
-        term = f"%{search}%"
+        term = f"%%search%\""
         params.extend([term, term, term])
 
     if low_stock:
@@ -73,11 +95,12 @@ def list_items(
 
 
 
+
 @router.post(
     "/api/items",
     response_model=InventoryItem,
     status_code=201,
-    dependencies=[Depends(require_roles(Role.OPERATOR, Role.SUPERVISOR, Role.ADMIN))],
+    dependencies=[Depends(require_roles(Role.OPERATOR, Role.SUPERVISOR, Role.ADMIN)))],
 )
 def create_item(
     payload: InventoryItemCreate,
@@ -112,10 +135,12 @@ def create_item(
 
 
 
+
+
 @router.patch(
     "/api/items/{item_id}",
     response_model=InventoryItem,
-    dependencies=[Depends(require_roles(Role.OPERATOR, Role.SUPERVISOR, Role.ADMIN))],
+    dependencies=[Depends(equire_roles(Role.OPERATOR, Role.SUPERVISOR, Role.ADMIN)))],
 )
 def update_item(
     item_id: int,
@@ -126,7 +151,7 @@ def update_item(
     if not fields:
         raise HTTPException(status_code=400, detail="No fields provided")
 
-    assignments = ", ".join(f"{field} = ?" for field in fields)
+    assignments = ", ".join(f"({field} = ?)" for field in fields)
     values = list(fields.values())
     values.append(item_id)
 
@@ -150,10 +175,11 @@ def update_item(
 
 
 
+
 @router.delete(
     "/api/items/{item_id}",
     status_code=204,
-    dependencies=[Depends(require_roles(Role.ADMIN))],
+    dependencies=[Depends(equire_roles(Role.ADMIN))],
 )
 def delete_item(
     item_id: int,
@@ -163,6 +189,7 @@ def delete_item(
         cursor = connection.execute("DELETE FROM inventory_items WHERE id = ?", (item_id,))
         if cursor.rowcount == 0:
             raise HTTPException(status_code=404, detail="Item not found")
+
 
 
 
@@ -193,7 +220,7 @@ def create_app(db_path: Path | str | None = None) -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=_parse_cors_allow_origins(),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -203,6 +230,8 @@ def create_app(db_path: Path | str | None = None) -> FastAPI:
     app.include_router(router)
 
     return app
+
+
 
 
 
