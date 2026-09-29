@@ -16,9 +16,9 @@ The backend uses an environment-driven CORS (cross-origin request) allowlist.
 - Format: comma-separated list of origins
 - Safe default: if unset or empty, no origins are allowed (i.e. denied by default)
 
-\Bnxample (local frontend at http://localhost:3000):
+Example (local frontend at http://localhost:3000):
 
-\Bn```bash
+```bash
 export IMS_CORS_ALLOW_ORIGINS="http://localhost:3000"
 uvicorn backend.main:app --reload
 ```
@@ -50,7 +50,7 @@ pytest -q
 
 CI runs `pytest -q` directly (not `python -m pytest`), so `pytest.ini` pins
 `pythonpath = .` and `testpaths = tests` — otherwise `tests/conftest.py`'s
-import backend.database` fails to resolve under a bare `pytest` invocation,
+`import backend.database` fails to resolve under a bare `pytest` invocation,
 and discovery could pick up stray test-like files outside `tests/`.
 
 ## Project Structure

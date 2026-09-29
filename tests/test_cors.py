@@ -34,7 +34,8 @@ def test_cors_blocks_disallowed_origin(monkeypatch, tmp_path):
     app = create_app(db_path=tmp_path / "db.db")
     with TestClient(app) as client:
         res = _preflight(client, origin="https://evil.example")
-        assert res.status_code in (200, 204)
+        # Starlette's CORSMiddleware returns 400 for a disallowed-origin preflight.
+        assert res.status_code in (200, 204, 400)
         assert res.headers.get("access-control-allow-origin") is None
 
 
@@ -47,5 +48,6 @@ def test_cors_denies_by_default_when_unset(monkeypatch, tmp_path):
     app = create_app(db_path=tmp_path / "db.db")
     with TestClient(app) as client:
         res = _preflight(client, origin="https://any.example")
-        assert res.status_code in (200, 204)
+        # Starlette's CORSMiddleware returns 400 for a disallowed-origin preflight.
+        assert res.status_code in (200, 204, 400)
         assert res.headers.get("access-control-allow-origin") is None

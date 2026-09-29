@@ -78,7 +78,7 @@ def list_items(
 
     if search:
         clauses.append("(sku LIKE ? OR name LIKE ? OR category LIKE ?)")
-        term = f"%%search%\""
+        term = f"%{search}%"
         params.extend([term, term, term])
 
     if low_stock:
@@ -100,7 +100,7 @@ def list_items(
     "/api/items",
     response_model=InventoryItem,
     status_code=201,
-    dependencies=[Depends(require_roles(Role.OPERATOR, Role.SUPERVISOR, Role.ADMIN)))],
+    dependencies=[Depends(require_roles(Role.OPERATOR, Role.SUPERVISOR, Role.ADMIN))],
 )
 def create_item(
     payload: InventoryItemCreate,
@@ -140,7 +140,7 @@ def create_item(
 @router.patch(
     "/api/items/{item_id}",
     response_model=InventoryItem,
-    dependencies=[Depends(equire_roles(Role.OPERATOR, Role.SUPERVISOR, Role.ADMIN)))],
+    dependencies=[Depends(require_roles(Role.OPERATOR, Role.SUPERVISOR, Role.ADMIN))],
 )
 def update_item(
     item_id: int,
@@ -151,7 +151,7 @@ def update_item(
     if not fields:
         raise HTTPException(status_code=400, detail="No fields provided")
 
-    assignments = ", ".join(f"({field} = ?)" for field in fields)
+    assignments = ", ".join(f"{field} = ?" for field in fields)
     values = list(fields.values())
     values.append(item_id)
 
@@ -179,7 +179,7 @@ def update_item(
 @router.delete(
     "/api/items/{item_id}",
     status_code=204,
-    dependencies=[Depends(equire_roles(Role.ADMIN))],
+    dependencies=[Depends(require_roles(Role.ADMIN))],
 )
 def delete_item(
     item_id: int,
