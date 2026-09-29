@@ -30,3 +30,14 @@ class InventoryItem(InventoryItemBase):
     created_at: str
     updated_at: str
     low_stock: bool
+
+
+class LoginRequest(BaseModel):
+    username: str = Field(min_length=1, max_length=120)
+    password: str = Field(min_length=1, max_length=256)
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    role: str
