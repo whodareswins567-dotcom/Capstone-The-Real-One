@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from .auth import Role, require_roles
 from .database import get_connection, init_db, seed_db
 from .models import InventoryItem, InventoryItemCreate, InventoryItemUpdate
 
@@ -17,10 +18,12 @@ FRONTEND_DIR = ROOT_DIR / "frontend"
 router = APIRouter()
 
 
+
 def map_item(row: sqlite3.Row) -> InventoryItem:
     data = dict(row)
     data["low_stock"] = data["quantity"] <= data["reorder_level"]
     return InventoryItem(**data)
+
 
 
 def get_app_db_path(request: Request) -> Path | str | None:
@@ -69,7 +72,13 @@ def list_items(
         return [map_item(row) for row in rows]
 
 
-@router.post("/api/items", response_model=InventoryItem, status_code=201)
+
+@router.post(
+    "/api/items",
+    response_model=InventoryItem,
+    status_code=201,
+    dependencies=[Depends(require_roles(Role.OPERATOR, Role.SUPERVISOR, Role.ADMIN))],
+)
 def create_item(
     payload: InventoryItemCreate,
     db_path: Path | str | None = Depends(get_app_db_path),
@@ -102,7 +111,12 @@ def create_item(
     return map_item(row)
 
 
-@router.patch("/api/items/{item_id}", response_model=InventoryItem)
+
+@router.patch(
+    "/api/items/{item_id}",
+    response_model=InventoryItem,
+    dependencies=[Depends(require_roles(Role.OPERATOR, Role.SUPERVISOR, Role.ADMIN))],
+)
 def update_item(
     item_id: int,
     payload: InventoryItemUpdate,
@@ -135,7 +149,12 @@ def update_item(
     return map_item(row)
 
 
-@router.delete("/api/items/{item_id}", status_code=204)
+
+@router.delete(
+    "/api/items/{item_id}",
+    status_code=204,
+    dependencies=[Depends(require_roles(Role.ADMIN))],
+)
 def delete_item(
     item_id: int,
     db_path: Path | str | None = Depends(get_app_db_path),
@@ -144,6 +163,7 @@ def delete_item(
         cursor = connection.execute("DELETE FROM inventory_items WHERE id = ?", (item_id,))
         if cursor.rowcount == 0:
             raise HTTPException(status_code=404, detail="Item not found")
+
 
 
 def create_app(db_path: Path | str | None = None) -> FastAPI:
@@ -183,6 +203,7 @@ def create_app(db_path: Path | str | None = None) -> FastAPI:
     app.include_router(router)
 
     return app
+
 
 
 app = create_app()

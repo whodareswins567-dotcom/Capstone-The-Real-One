@@ -1,7 +1,7 @@
 import sqlite3
 
 
-def test_create_item_is_committed_before_response_is_returned(tmp_path):
+def test_create_item_is_committed_before_response_is_returned(tmp_path, auth_tokens):
     """Guards against committing in a yield-dependency teardown, which FastAPI
     runs only after the response has been produced."""
     from fastapi.testclient import TestClient
@@ -35,6 +35,7 @@ def test_create_item_is_committed_before_response_is_returned(tmp_path):
                 "location": "A1",
                 "notes": "",
             },
+            headers={"Authorization": f"Bearer {auth_tokens['admin']}"},
         )
 
     assert resp.status_code == 201
