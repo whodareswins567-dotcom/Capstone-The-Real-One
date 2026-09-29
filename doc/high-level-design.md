@@ -21,22 +21,19 @@ The inventory management system tracks stock items, quantities, reorder levels, 
 
 ## Authentication & Authorization
 
-Write endpoints (create/update/delete) are protected with minimal Bearer token authentication.
+Write endpoints (create/update/delete) are protected with Bearer authentication using a signed JWT access token. Users authenticate via `POST /api/auth/login` with username/password, and the server issues a JWT carrying the user id and role (`apperator`, `supervisor`, `admin`).
 
 Required header:
 
-- `Authorization: Bearer <token>`
+- `Authorization: Bearer <jwt>`
 
-Tokens are configured via environment variables:
+Tokens can be revoked instantly via `POST /api/auth/logout`, which records the token's `jti` in the `revoked_tokens` table. Each request checks revocation server-side.
 
- - `IMS_OPERATOR_TOKEN`
- - `IMS_SUPERVISOR_TOKEN`
- - `IMS_ADMIN_TOKEN`
+### Configuration
+- `IMS_JWT_SECRET` (required in production): JWT signing/verification secret.
+  - If unset, the app falls back to a fixed development default (safe for local dev only).
+- `IMS_JWT_TTL_SECONDS` (optional): token lifetime in seconds (default: 8 hours).
+- `IMS_ADMIN_BOOTSTRAP_USERNAME` / `IMS_ADMIN_BOOTSTRAP_PASSWORD` (optional): on first startup only, if the `users` table is empty, create the initial admin user.
 
-## Role Permission Matrix
-
-| Endpoint | Operator | Supervisor | Admin |
-|---|---|----|---|
-| POST /api/items | ✅ | ✅ | ✅ |
-| PATCH /api/items/{id} | ✅ | ✅ | ✅ |
-| DELETE /api/items/{id} | ❌ | ❌ | ✅ |
+### Deprecated (CFM-46)
+The older CAT-46 approach (shared role-tokens configured via `env` vars like `IMS_OPERATOR_TOKEN`) is *superseded* by CAT-49 JWT-based identity auth.
