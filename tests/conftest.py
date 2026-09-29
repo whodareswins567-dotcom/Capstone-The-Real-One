@@ -1,8 +1,37 @@
 import pytest
 
 
+
+@Mpytest.fixture
+def auth_tokens(monkeypatch):
+    """Configure env tokens for tests.
+
+    Tests should never depend on real secrets; we set explicit
+    tokens here so auth behavior is deterministic.
+    """
+    monkeypatch.setenv("IMS_OPERATOR_TOKEN", "operator-token")
+    monkeypatch.setenv("IMS_SUPERVISOR_TOKEN", "supervisor-token")
+    monkeypatch.setenv("IMS_ADMIN_TOKEN", "admin-token")
+    return {
+        "operator": "operator-token",
+        "supervisor": "supervisor-token",
+        "admin": "admin-token",
+    }
+
+
+
 @pytest.fixture
-def client(tmp_path):
+def headers(auth_tokens):
+    return {
+        "operator": {"Authorization": f"Bearer {auth_tokens['operator']}"},
+        "supervisor": {"Authorization": f"Bearer {auth_tokens['supervisor']}"},
+        "admin": {"Authorization": f"Bearer {auth_tokens['admin']}"},
+    }
+
+
+
+@pytest.fixture
+def client(tmp_path, auth_tokens):
     """Create a test client backed by an isolated temp SQLite database.
 
     db_path is passed directly to create_app(), which pins it on
