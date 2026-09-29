@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 import sqlite3
 from contextlib import asynccontextmanager
 
@@ -19,10 +20,30 @@ router = APIRouter()
 
 
 
+
+def _parse_cors_allow_origins() -> list[str]:
+    """Parse allowed CORS origins from environment.
+
+    Expected format:
+      IMS_CORS_ALLOW_ORIGINS="http://localhost:3000,https://app.example.com"
+
+    Safe default:
+      if unset/empty, deny all origins (empty list).
+    """
+    raw = os.getenv("IMS_CORS_ALLOW_ORIGINS", "")
+    origins = [o.strip() for o in raw.split(",") if o.strip()]
+    return origins
+
+
+
+
+
 def map_item(row: sqlite3.Row) -> InventoryItem:
     data = dict(row)
     data["low_stock"] = data["quantity"] <= data["reorder_level"]
     return InventoryItem(**data)
+
+
 
 
 
@@ -42,6 +63,7 @@ def index() -> FileResponse:
 @router.get("/api/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
 
 
 @router.get("/api/items", response_model=list[InventoryItem])
@@ -70,6 +92,7 @@ def list_items(
     with get_connection(db_path) as connection:
         rows = connection.execute(sql, params).fetchall()
         return [map_item(row) for row in rows]
+
 
 
 
@@ -112,6 +135,8 @@ def create_item(
 
 
 
+
+
 @router.patch(
     "/api/items/{item_id}",
     response_model=InventoryItem,
@@ -150,6 +175,7 @@ def update_item(
 
 
 
+
 @router.delete(
     "/api/items/{item_id}",
     status_code=204,
@@ -163,6 +189,7 @@ def delete_item(
         cursor = connection.execute("DELETE FROM inventory_items WHERE id = ?", (item_id,))
         if cursor.rowcount == 0:
             raise HTTPException(status_code=404, detail="Item not found")
+
 
 
 
@@ -193,7 +220,7 @@ def create_app(db_path: Path | str | None = None) -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=_parse_cors_allow_origins(),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -203,6 +230,8 @@ def create_app(db_path: Path | str | None = None) -> FastAPI:
     app.include_router(router)
 
     return app
+
+
 
 
 

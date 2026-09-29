@@ -8,6 +8,21 @@ This is an inventory management system built with:
 
 The implementation supports basic item listing, creation, editing, deletion, and a low-stock filter.
 
+## CORS configuration
+
+The backend uses an environment-driven CORS (cross-origin request) allowlist.
+
+- Env var: `IMS_CORS_ALLOW_ORIGINS`
+- Format: comma-separated list of origins
+- Safe default: if unset or empty, no origins are allowed (i.e. denied by default)
+
+Example (local frontend at http://localhost:3000):
+
+```bash
+export IMS_CORS_ALLOW_ORIGINS="http://localhost:3000"
+uvicorn backend.main:app --reload
+```
+
 ## Run Locally
 
 ```bash
