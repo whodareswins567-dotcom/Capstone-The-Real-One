@@ -1,9 +1,10 @@
 """Fixtures for API-level Playwright tests against the FastAPI app.
 
-These tests exercise CAP-46 auth/RBAC behavior over real HTTP (not the
-ASGI TestClient used by tests/), by launching `uvicorn backend.main:app`
-as a subprocess against an isolated temp SQLite DB, then driving it with
-Playwright's APIRequestContext (no browser binaries required).
+These tests exercise CAP-46 auth/RBAC behavior and CAP-47 CORS-allowlist
+behavior over real HTTP (not the ASGI TestClient used by tests/), by
+launching `uvicorn backend.main:app` as a subprocess against an isolated
+temp SQLite DB, then driving it with Playwright's APIRequestContext (no
+browser binaries required).
 
 Deliberately kept outside tests/ (pytest.ini pins testpaths=tests) so the
 existing `pytest -q` CI invocation is unaffected. Run these explicitly:
@@ -36,6 +37,11 @@ ROLE_TOKENS = {
     "admin": ADMIN_TOKEN,
 }
 
+# CAP-47: origin baked into the "allowlisted" live server's
+# IMS_CORS_ALLOW_ORIGINS env var. Kept here (rather than in the test file)
+# so fixture setup and test assertions can't drift apart.
+CORS_ALLOWED_ORIGIN = "https://allowed.example"
+
 
 def _free_port() -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -62,22 +68,14 @@ def _wait_for_health(base_url: str, proc: subprocess.Popen, timeout: float = 15.
     raise RuntimeError(f"Server did not become healthy in time: {last_error}")
 
 
-@pytest.fixture(scope="session")
-def role_tokens() -> dict[str, str]:
-    return ROLE_TOKENS
+def _launch_uvicorn(db_path: Path, port: int, env: dict[str, str]):
+    """Launch `backend.main:app` as a subprocess with the given env.
 
-
-@pytest.fixture(scope="session")
-def live_server(tmp_path_factory, role_tokens):
-    """Start a real backend.main:app instance on a free port."""
-    db_path = tmp_path_factory.mktemp("cap46-pw-db") / "inventory.db"
-    port = _free_port()
-    base_url = f"http://127.0.0.1:{port}"
-
-    env = os.environ.copy()
-    env["IMS_OPERATOR_TOKEN"] = role_tokens["operator"]
-    env["IMS_SUPERVISOR_TOKEN"] = role_tokens["supervisor"]
-    env["IMS_ADMIN_TOKEN"] = role_tokens["admin"]
+    Shared by every live-server fixture in this module (CAP-46 and CAP-47)
+    so each one only has to decide which env vars to set/unset, not
+    re-implement process launch/health-wait/teardown.
+    """
+    env = dict(env)
     env["INVENTORY_DB_PATH"] = str(db_path)
 
     proc = subprocess.Popen(
@@ -99,6 +97,17 @@ def live_server(tmp_path_factory, role_tokens):
         stderr=subprocess.STDOUT,
         text=True,
     )
+    return proc
+
+
+def _run_server(db_prefix: str, tmp_path_factory, env: dict[str, str]):
+    """Generator body shared by the session-scoped live-server fixtures:
+    start uvicorn, wait for health, yield the base URL, then tear down."""
+    db_path = tmp_path_factory.mktemp(db_prefix) / "inventory.db"
+    port = _free_port()
+    base_url = f"http://127.0.0.1:{port}"
+
+    proc = _launch_uvicorn(db_path, port, env)
 
     try:
         _wait_for_health(base_url, proc)
@@ -112,10 +121,64 @@ def live_server(tmp_path_factory, role_tokens):
             proc.wait(timeout=5)
 
 
+@pytest.fixture(scope="session")
+def role_tokens() -> dict[str, str]:
+    return ROLE_TOKENS
+
+
+@pytest.fixture(scope="session")
+def live_server(tmp_path_factory, role_tokens):
+    """Start a real backend.main:app instance on a free port, configured
+    with CAP-46 role tokens (auth/RBAC suite)."""
+    env = os.environ.copy()
+    env["IMS_OPERATOR_TOKEN"] = role_tokens["operator"]
+    env["IMS_SUPERVISOR_TOKEN"] = role_tokens["supervisor"]
+    env["IMS_ADMIN_TOKEN"] = role_tokens["admin"]
+
+    yield from _run_server("cap46-pw-db", tmp_path_factory, env)
+
+
+@pytest.fixture(scope="session")
+def cors_allowlisted_server(tmp_path_factory):
+    """CAP-47: a live server started with IMS_CORS_ALLOW_ORIGINS set to a
+    single known origin (CORS_ALLOWED_ORIGIN), used to verify that origin
+    is echoed back and that any other origin is not."""
+    env = os.environ.copy()
+    env["IMS_CORS_ALLOW_ORIGINS"] = CORS_ALLOWED_ORIGIN
+
+    yield from _run_server("cap47-pw-allowlisted-db", tmp_path_factory, env)
+
+
+@pytest.fixture(scope="session")
+def cors_default_server(tmp_path_factory):
+    """CAP-47: a live server started with IMS_CORS_ALLOW_ORIGINS entirely
+    unset, used to verify the safe (deny-by-default) fallback."""
+    env = os.environ.copy()
+    env.pop("IMS_CORS_ALLOW_ORIGINS", None)
+
+    yield from _run_server("cap47-pw-default-db", tmp_path_factory, env)
+
+
 @pytest.fixture()
 def api_context(playwright, live_server):
     """A Playwright APIRequestContext pinned to the live server's base URL."""
     context = playwright.request.new_context(base_url=live_server)
+    yield context
+    context.dispose()
+
+
+@pytest.fixture()
+def cors_allowlisted_context(playwright, cors_allowlisted_server):
+    """APIRequestContext pinned to the CAP-47 allowlisted live server."""
+    context = playwright.request.new_context(base_url=cors_allowlisted_server)
+    yield context
+    context.dispose()
+
+
+@pytest.fixture()
+def cors_default_context(playwright, cors_default_server):
+    """APIRequestContext pinned to the CAP-47 no-allowlist-configured live server."""
+    context = playwright.request.new_context(base_url=cors_default_server)
     yield context
     context.dispose()
 
