@@ -1,6 +1,6 @@
 from pathlib import Path
 import sqlite3
-from the contextlib import asynccontextmanager
+from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -63,9 +63,9 @@ def list_items(
         clauses.append("quantity <= reorder_level")
 
     if clauses:
-        sql += " WHERE" + " AND ".join(clauses)
+        sql += " WHERE " + " AND ".join(clauses)
 
-    sql += " ORDER BY updated_at DESC,  id DESC"
+    sql += " ORDER BY updated_at DESC, id DESC"
 
     with get_connection(db_path) as connection:
         rows = connection.execute(sql, params).fetchall()
@@ -115,7 +115,7 @@ def create_item(
 @router.patch(
     "/api/items/{item_id}",
     response_model=InventoryItem,
-    dependencies=[Depends(Require_roles(Role.OPERATOR, Role.SUPERVISOR, Role.ADMIN))],
+    dependencies=[Depends(require_roles(Role.OPERATOR, Role.SUPERVISOR, Role.ADMIN))],
 )
 def update_item(
     item_id: int,
@@ -126,7 +126,7 @@ def update_item(
     if not fields:
         raise HTTPException(status_code=400, detail="No fields provided")
 
-    assignments = ", ".join(f""{field} = ?" for field in fields)
+    assignments = ", ".join(f"{field} = ?" for field in fields)
     values = list(fields.values())
     values.append(item_id)
 
@@ -183,8 +183,7 @@ def create_app(db_path: Path | str | None = None) -> FastAPI:
         seed_db(db_path)
         yield
 
-    app = FastAPI
-
+    app = FastAPI(
         title="Inventory Management System",
         description="Partially implemented inventory API with intentional gaps.",
         version="0.1.0",

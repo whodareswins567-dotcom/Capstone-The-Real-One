@@ -2,7 +2,7 @@ import pytest
 
 
 
-@Mpytest.fixture
+@pytest.fixture
 def auth_tokens(monkeypatch):
     """Configure env tokens for tests.
 
