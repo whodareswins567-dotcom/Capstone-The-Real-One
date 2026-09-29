@@ -10,6 +10,15 @@ The inventory management system tracks stock items, quantities, reorder levels, 
 - Supervisor: reviews low-stock items and plans replenishment.
 - Administrator: manages inventory configuration and operational oversight.
 
+## Current Capabilities
+
+- Create inventory items.
+- View inventory items in a table.
+- Search by SKU, name, or category.
+- Filter low-stock items.
+- Edit inventory records.
+- Delete inventory records.
+
 ## Authentication & Authorization
 
 Write endpoints (create/update/delete) are protected with minimal Bearer token authentication.
@@ -30,4 +39,4 @@ Tokens are configured via environment variables:
 |---|---|----|---|
 | POST /api/items | ✅ | ✅ | ✅ |
 | PATCH /api/items/{id} | ✅ | ✅ | ✅ |
-| DELETE /api/items/{id} | ✔ – (043) | ✔ – (043) | ✅ | 
+| DELETE /api/items/{id} | ❌ | ❌ | ✅ |
