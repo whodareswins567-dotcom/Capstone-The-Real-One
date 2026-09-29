@@ -150,11 +150,37 @@ CI runs `pytest -q` directly (not `python -m pytest`), so `pytest.ini` pins
 `import backend.database` fails to resolve under a bare `pytest` invocation,
 and discovery could pick up stray test-like files outside `tests/`.
 
+## End-to-End Testing (Playwright)
+
+The `playwright/` directory contains API-level end-to-end tests that
+exercise the app over real HTTP (not the in-process FastAPI `TestClient`
+used by `tests/`). Each test launches `backend.main:app` as a live
+`uvicorn` subprocess against an isolated temp SQLite database (set via the
+`INVENTORY_DB_PATH` env var) and drives it with Playwright's
+`APIRequestContext`. No browser binaries are required, since these tests
+never open a browser page.
+
+Run locally:
+
+```bash
+pip install -r requirements.txt -r requirements-dev.txt
+pytest -q playwright
+```
+
+This suite is deliberately kept outside `tests/` (see `pytest.ini`'s
+`testpaths = tests`), so it must be invoked explicitly with the `playwright`
+path as shown above - it does not run as part of a bare `pytest -q`.
+
+This suite also runs in CI in a separate `e2e-playwright` job alongside the
+backend `test` job (see `.github/workflows/ci.yml`), and the workflow fails
+if any Playwright test fails.
+
 ## Project Structure
 
 ```text
-backend/   FastAPI application and SQLite access
-frontend/  Static HTML/CSS/JS user interface
-doc/       High-level, low-level, architecture, and Confluence docs
-tests/     Automated tests
+backend/    FastAPI application and SQLite access
+frontend/   Static HTML/CSS/JS user interface
+doc/        High-level, low-level, architecture, and Confluence docs
+tests/      Automated tests
+playwright/ Playwright API-level end-to-end tests
 ```
