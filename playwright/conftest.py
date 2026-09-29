@@ -14,6 +14,7 @@ existing `pytest -q` CI invocation is unaffected. Run these explicitly:
 
 from __future__ import annotations
 
+import json
 import os
 import socket
 import subprocess
@@ -27,14 +28,13 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-OPERATOR_TOKEN = "pw-cap46-operator-token"
-SUPERVISOR_TOKEN = "pw-cap46-supervisor-token"
-ADMIN_TOKEN = "pw-cap46-admin-token"
 
-ROLE_TOKENS = {
-    "operator": OPERATOR_TOKEN,
-    "supervisor": SUPERVISOR_TOKEN,
-    "admin": ADMIN_TOKEN,
+# CAP-46 role-user credentials, created directly in the live server's db and
+# exchanged for real JWTs via POST /api/auth/login (see role_tokens below).
+ROLE_CREDENTIALS = {
+    "operator": ("pw-cap46-operator", "operator-pass-1"),
+    "supervisor": ("pw-cap46-supervisor", "supervisor-pass-1"),
+    "admin": ("pw-cap46-admin", "admin-pass-1"),
 }
 
 # CAP-47: origin baked into the "allowlisted" live server's
@@ -72,6 +72,35 @@ def _wait_for_health(base_url: str, proc: subprocess.Popen, timeout: float = 15.
             last_error = exc
             time.sleep(0.2)
     raise RuntimeError(f"Server did not become healthy in time: {last_error}")
+
+
+def _insert_user(db_path: Path, username: str, password: str, role) -> None:
+    """Insert a role's test user directly into the live server's SQLite db.
+
+    Mirrors tests/conftest.py::_insert_user - same hashing
+    (backend.auth.hash_password) so a subsequent POST /api/auth/login with
+    this username/password behaves exactly as it would for a real user.
+    """
+    from backend.auth import hash_password
+    from backend.database import get_connection
+
+    with get_connection(db_path) as connection:
+        connection.execute(
+            "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+            (username, hash_password(password), role.value),
+        )
+
+
+def _login(base_url: str, username: str, password: str) -> str:
+    """POST /api/auth/login and return the issued access_token."""
+    req = urllib.request.Request(
+        f"{base_url}/api/auth/login",
+        data=json.dumps({"username": username, "password": password}).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=5) as resp:
+        return json.loads(resp.read().decode("utf-8"))["access_token"]
 
 
 def _launch_uvicorn(db_path: Path, port: int, env: dict[str, str]):
@@ -128,20 +157,50 @@ def _run_server(db_prefix: str, tmp_path_factory, env: dict[str, str]):
 
 
 @pytest.fixture(scope="session")
-def role_tokens() -> dict[str, str]:
-    return ROLE_TOKENS
+def _cap46_db_path(tmp_path_factory) -> Path:
+    return tmp_path_factory.mktemp("cap46-pw-db") / "inventory.db"
 
 
 @pytest.fixture(scope="session")
-def live_server(tmp_path_factory, role_tokens):
-    """Start a real backend.main:app instance on a free port, configured
-    with CAP-46 role tokens (auth/RBAC suite)."""
+def live_server(_cap46_db_path):
+    """Start a real backend.main:app instance on a free port (auth/RBAC
+    suite)."""
     env = os.environ.copy()
-    env["IMS_OPERATOR_TOKEN"] = role_tokens["operator"]
-    env["IMS_SUPERVISOR_TOKEN"] = role_tokens["supervisor"]
-    env["IMS_ADMIN_TOKEN"] = role_tokens["admin"]
+    port = _free_port()
+    base_url = f"http://127.0.0.1:{port}"
 
-    yield from _run_server("cap46-pw-db", tmp_path_factory, env)
+    proc = _launch_uvicorn(_cap46_db_path, port, env)
+
+    try:
+        _wait_for_health(base_url, proc)
+        yield base_url
+    finally:
+        proc.terminate()
+        try:
+            proc.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait(timeout=5)
+
+
+@pytest.fixture(scope="session")
+def role_tokens(live_server, _cap46_db_path) -> dict[str, str]:
+    """Create one user per role directly in the live server's db, then log
+    in via POST /api/auth/login to obtain real JWTs.
+
+    Replaces the legacy CAP-46 env-token config (IMS_OPERATOR_TOKEN etc.) now
+    that auth is identity-based (CAP-49) - mirrors the fix already applied to
+    tests/conftest.py::auth_tokens.
+    """
+    from backend.auth import Role
+
+    roles = {"operator": Role.OPERATOR, "supervisor": Role.SUPERVISOR, "admin": Role.ADMIN}
+
+    tokens = {}
+    for role_name, (username, password) in ROLE_CREDENTIALS.items():
+        _insert_user(_cap46_db_path, username, password, roles[role_name])
+        tokens[role_name] = _login(live_server, username, password)
+    return tokens
 
 
 @pytest.fixture(scope="session")

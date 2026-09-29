@@ -6,19 +6,17 @@ This is an inventory management system built with:
 - Backend: FastAPI
 - Database: SQLite3
 
-
 The implementation supports basic item listing, creation, editing, deletion, and a low-stock filter.
 
 ## CORS configuration
-
 
 The backend uses an environment-driven CORS (cross-origin request) allowlist.
 
 - Env var: `IMS_CORS_ALLOW_ORIGINS`
 - Format: comma-separated list of origins
-- Safe default: if unset or empty, no origins are allowed (i.e denied by default)
+- Safe default: if unset or empty, no origins are allowed (i.e. denied by default)
 
-- Env var: `IMC_CORS_ALLOW_CREDENTIALS`
+- Env var: `IMS_CORS_ALLOW_CREDENTIALS`
   - Optional: explicitly allow credentialed CORS requests from allowlisted origins (e.g. cookies/sessions)
   - Values: `true`/ `1`/ `yes`/ `on` (case-insensitive)
   - Safe default: if unset/empty/unrecognized, credentials are disallowed `False`
@@ -30,7 +28,7 @@ Example (local frontend at http://localhost:3000):
 ```bash
 export IMS_CORS_ALLOW_ORIGINS="http://localhost:3000"
 # Optional: only if you need credentialed CORS
-export IMC_CORS_ALLOW_CREDENTIALS="true"
+export IMS_CORS_ALLOW_CREDENTIALS="true"
 uvicorn backend.main:app --reload
 ```
 
@@ -56,7 +54,7 @@ if either is unset, bootstrap is skipped (and a warning is logged):
 
 ```bash
 export IMS_ADMIN_BOOTSTRAP_USERNAME="admin"
-export IMC_ADMIN_BOOTSTRAP_PASSWORD="change-me-immediately"
+export IMS_ADMIN_BOOTSTRAP_PASSWORD="change-me-immediately"
 uvicorn backend.main:app --reload
 ```
 
@@ -92,7 +90,7 @@ curl -s -X POST http://127.0.0.1:8000/api/items \
   -d '{"sku": "SKU-2001", "name": "Shipping Box", "category": "Packaging", "quantity": 40, "reorder_level": 10, "location": "Aisle 2", "notes": ""}'
 ```
 
-#### Logging out / revocation
+### Logging out / revocation
 
 Tokens are JWTs signed with a server-side secret and carry a unique `jti`
 claim. `POST /api/auth/logout` (with the token to invalidate in the
@@ -114,11 +112,11 @@ curl -s -X POST http://127.0.0.1:8000/api/auth/logout \
   outside a throwaway local environment).
 - `IMS_JWT_TTL_SECONDS`: optional token lifetime in seconds. Defaults to
   28800 (8 hours) if unset.
- - `IMS_ADMIN_BOOTSTRAP_USERNAME `/ `IMS_ADMIN_BOOTSTRAP_PASSWORD`: optional,
+- `IMS_ADMIN_BOOTSTRAP_USERNAME` / `IMS_ADMIN_BOOTSTRAP_PASSWORD`: optional,
   used only once (see "Bootstrapping the first admin" above) to create the
   first admin user when the `users` table is empty.
 
-Password hashes are stored using PBGDF2-HMAC-SHA256 with a random per-user
+Password hashes are stored using PBKDF2-HMAC-SHA256 with a random per-user
 salt (stdlib `hashlib`, no extra dependency); passwords themselves are
 never stored or logged.
 
@@ -131,13 +129,13 @@ uvicorn backend.main:app --reload
 
 Open:
 ```text
-itp://127.0.0.1:8000
+http://127.0.0.1:8000
 ```
 
 API docs:
 
 ```text
-itp://127.0.0.1:8000/docs
+http://127.0.0.1:8000/docs
 ```
 
 ## Testing
@@ -147,37 +145,42 @@ pip install -r requirements.txt -r requirements-dev.txt
 pytest -q
 ```
 
-CI qÕns `pytest -q` directly (not `python -m pytest`), so `pytest.ini` pins
+CI runs `pytest -q` directly (not `python -m pytest`), so `pytest.ini` pins
 `pythonpath = .` and `testpaths = tests` â€” otherwise `tests/conftest.py`'s
 `import backend.database` fails to resolve under a bare `pytest` invocation,
-and discovery could pick up stray test-like files outside `tests`/.
+and discovery could pick up stray test-like files outside `tests/`.
 
+## End-to-End Testing (Playwright)
 
-### END-lo-end tests (Playwright)
-
-There is an additional END-lo-end test suite under `playwright/`. These are Python tests that use Playwright's API request context (they do *not* use a browser UI flow), start a real uvicorn server in a subprocess, and exercise auth/RBAC and CORS behavior over HTTP.
+The `playwright/` directory contains API-level end-to-end tests that
+exercise the app over real HTTP (not the in-process FastAPI `TestClient`
+used by `tests/`). Each test launches `backend.main:app` as a live
+`uvicorn` subprocess against an isolated temp SQLite database (set via the
+`INVENTORY_DB_PATH` env var) and drives it with Playwright's
+`APIRequestContext`. No browser binaries are required, since these tests
+never open a browser page.
 
 Run locally:
 
 ```bash
 pip install -r requirements.txt -r requirements-dev.txt
-# Once per env (installs btowser binaries and system deps on Linux)
-python -m playwright install --with-deps
-
-# Run the E2E suite
 pytest -q playwright
 ```
 
-CI:
- - GitHub Actions runs these tests in a separate job in `.github/workflows/ci.yml`.
- - They are dynamically port-allocated and use a temp SQLite DB (isolated per CI run), so no extra services are needed.
+This suite is deliberately kept outside `tests/` (see `pytest.ini`'s
+`testpaths = tests`), so it must be invoked explicitly with the `playwright`
+path as shown above - it does not run as part of a bare `pytest -q`.
+
+This suite also runs in CI in a separate `e2e-playwright` job alongside the
+backend `test` job (see `.github/workflows/ci.yml`), and the workflow fails
+if any Playwright test fails.
 
 ## Project Structure
 
 ```text
-backend/   FastAPI application and SQLite access
-frontend/  Static HTML/CSS/JS user interface
-doc/       High-level, low-level, architecture, and Confluence docs
-tests/     Automated tests
-playwright/ API-level playwright tests (targets auth/CORS caps)
+backend/    FastAPI application and SQLite access
+frontend/   Static HTML/CSS/JS user interface
+doc/        High-level, low-level, architecture, and Confluence docs
+tests/      Automated tests
+playwright/ Playwright API-level end-to-end tests
 ```
