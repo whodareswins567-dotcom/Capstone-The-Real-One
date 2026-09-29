@@ -1,7 +1,7 @@
 """Fixtures for API-level Playwright tests against the FastAPI app.
 
-These tests exercise CAP-46 auth/RBAC behavior and CAP-47 CORS-allowlist
-behavior over real HTTP (not the ASGI TestClient used by tests/), by
+These tests exercise CAP-46 auth/RBAC behavior, CAP-47 CORS-allowlist behavior, and
+CAP-48 CORS credentialed-request behavior over real HTTP (not the ASGI TestClient used by tests/), by
 launching `uvicorn backend.main:app` as a subprocess against an isolated
 temp SQLite DB, then driving it with Playwright's APIRequestContext (no
 browser binaries required).
@@ -41,6 +41,12 @@ ROLE_TOKENS = {
 # IMS_CORS_ALLOW_ORIGINS env var. Kept here (rather than in the test file)
 # so fixture setup and test assertions can't drift apart.
 CORS_ALLOWED_ORIGIN = "https://allowed.example"
+
+# CAP-48: value baked into the "credentials enabled" live server's
+# IMS_CORS_ALLOW_CREDENTIALS env var, and a deliberately unrecognized value
+# used to exercise the safe-default parsing fallback.
+CORS_ALLOW_CREDENTIALS_VALUE = "true"
+CORS_ALLOW_CREDENTIALS_UNRECOGNIZED_VALUE = "nope"
 
 
 def _free_port() -> int:
@@ -142,9 +148,15 @@ def live_server(tmp_path_factory, role_tokens):
 def cors_allowlisted_server(tmp_path_factory):
     """CAP-47: a live server started with IMS_CORS_ALLOW_ORIGINS set to a
     single known origin (CORS_ALLOWED_ORIGIN), used to verify that origin
-    is echoed back and that any other origin is not."""
+    is echoed back and that any other origin is not.
+
+    Also reused by CAP-48: IMS_CORS_ALLOW_CREDENTIALS is left unset here
+    (defensively popped, in case it happens to be set in the ambient
+    environment), so this same server doubles as the safe
+    credentials-disabled-by-default baseline."""
     env = os.environ.copy()
     env["IMS_CORS_ALLOW_ORIGINS"] = CORS_ALLOWED_ORIGIN
+    env.pop("IMS_CORS_ALLOW_CREDENTIALS", None)
 
     yield from _run_server("cap47-pw-allowlisted-db", tmp_path_factory, env)
 
@@ -157,6 +169,32 @@ def cors_default_server(tmp_path_factory):
     env.pop("IMS_CORS_ALLOW_ORIGINS", None)
 
     yield from _run_server("cap47-pw-default-db", tmp_path_factory, env)
+
+
+@pytest.fixture(scope="session")
+def cors_credentials_enabled_server(tmp_path_factory):
+    """CAP-48: a live server started with IMS_CORS_ALLOW_ORIGINS set to a
+    single known origin (CORS_ALLOWED_ORIGIN) and IMS_CORS_ALLOW_CREDENTIALS
+    explicitly enabled, used to verify Access-Control-Allow-Credentials is
+    present and true when the toggle is opted in."""
+    env = os.environ.copy()
+    env["IMS_CORS_ALLOW_ORIGINS"] = CORS_ALLOWED_ORIGIN
+    env["IMS_CORS_ALLOW_CREDENTIALS"] = CORS_ALLOW_CREDENTIALS_VALUE
+
+    yield from _run_server("cap48-pw-credentials-enabled-db", tmp_path_factory, env)
+
+
+@pytest.fixture(scope="session")
+def cors_credentials_unrecognized_server(tmp_path_factory):
+    """CAP-48: a live server started with IMS_CORS_ALLOW_ORIGINS set to a
+    single known origin (CORS_ALLOWED_ORIGIN) and IMS_CORS_ALLOW_CREDENTIALS
+    set to an unrecognized value, used to verify the safe-default parsing
+    fallback (treated the same as disabled/unset)."""
+    env = os.environ.copy()
+    env["IMS_CORS_ALLOW_ORIGINS"] = CORS_ALLOWED_ORIGIN
+    env["IMS_CORS_ALLOW_CREDENTIALS"] = CORS_ALLOW_CREDENTIALS_UNRECOGNIZED_VALUE
+
+    yield from _run_server("cap48-pw-credentials-unrecognized-db", tmp_path_factory, env)
 
 
 @pytest.fixture()
@@ -179,6 +217,22 @@ def cors_allowlisted_context(playwright, cors_allowlisted_server):
 def cors_default_context(playwright, cors_default_server):
     """APIRequestContext pinned to the CAP-47 no-allowlist-configured live server."""
     context = playwright.request.new_context(base_url=cors_default_server)
+    yield context
+    context.dispose()
+
+
+@pytest.fixture()
+def cors_credentials_enabled_context(playwright, cors_credentials_enabled_server):
+    """APIRequestContext pinned to the CAP-48 credentials-enabled live server."""
+    context = playwright.request.new_context(base_url=cors_credentials_enabled_server)
+    yield context
+    context.dispose()
+
+
+@pytest.fixture()
+def cors_credentials_unrecognized_context(playwright, cors_credentials_unrecognized_server):
+    """APIRequestContext pinned to the CAP-48 unrecognized-credentials-value live server."""
+    context = playwright.request.new_context(base_url=cors_credentials_unrecognized_server)
     yield context
     context.dispose()
 

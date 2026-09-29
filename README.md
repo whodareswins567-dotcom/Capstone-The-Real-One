@@ -16,10 +16,19 @@ The backend uses an environment-driven CORS (cross-origin request) allowlist.
 - Format: comma-separated list of origins
 - Safe default: if unset or empty, no origins are allowed (i.e. denied by default)
 
+- Env var: `IMS_CORS_ALLOW_CREDENTIALS`
+  - Optional: explicitly allow credentialed CORS requests from allowlisted origins (e.g. cookies/sessions)
+  - Values: `true`/ `1`/ `yes`/ `on` (case-insensitive)
+  - Safe default: if unset/empty/unrecognized, credentials are disallowed `False`
+
+Enabling credentials increases the risk of misconfiguration and broadens the cross-origin attack surface, so only enable it if you intentionally use cookie/browser-credential auth from a different origin.
+
 Example (local frontend at http://localhost:3000):
 
 ```bash
 export IMS_CORS_ALLOW_ORIGINS="http://localhost:3000"
+# Optional: only if you need credentialed CORS
+export IMS_CORS_ALLOW_CREDENTIALS="true"
 uvicorn backend.main:app --reload
 ```
 
