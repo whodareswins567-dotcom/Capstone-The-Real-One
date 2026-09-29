@@ -1,5 +1,41 @@
 # API Reference
 
+## Authentication
+
+```http
+POST /api/auth/login
+Content-Type: application/json
+```
+
+```json
+{
+  "username": "admin",
+  "password": "change-me-immediately"
+}
+```
+
+Response:
+
+```json
+{
+  "access_token": "<jwt>",
+  "token_type": "bearer",
+  "role": "admin"
+}
+```
+
+```http
+POST /api/auth/logout
+Authorization: Bearer <jwt>
+```
+
+Revokes the token used to authenticate the request. Returns `204 No Content`.
+
+Protected write endpoints (`POST /api/items`, `PATCH /api/items/{item_id}`,
+`DELETE /api/items/{item_id}`) require `Authorization: Bearer <jwt>` from a
+login response. See README.md "Authentication" for the full role matrix and
+bootstrap instructions.
+
 ## Health
 
 ```http

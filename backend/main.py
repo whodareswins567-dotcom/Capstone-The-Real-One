@@ -8,9 +8,22 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from .auth import Role, require_roles
-from .database import get_connection, init_db, seed_db
-from .models import InventoryItem, InventoryItemCreate, InventoryItemUpdate
+from .auth import (
+    Identity,
+    Role,
+    authenticate_user,
+    get_current_identity,
+    require_roles,
+    revoke_current_token,
+)
+from .database import bootstrap_admin_if_empty, get_connection, init_db, seed_db
+from .models import (
+    InventoryItem,
+    InventoryItemCreate,
+    InventoryItemUpdate,
+    LoginRequest,
+    TokenResponse,
+)
 
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -83,6 +96,19 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+
+@router.post("/api/auth/login", response_model=TokenResponse)
+def login(payload: LoginRequest, request: Request) -> TokenResponse:
+    token, role = authenticate_user(request, payload.username, payload.password)
+    return TokenResponse(access_token=token, token_type="bearer", role=role.value)
+
+
+@router.post("/api/auth/logout", status_code=204)
+def logout(
+    request: Request,
+    identity: Identity = Depends(get_current_identity),
+) -> None:
+    revoke_current_token(request, identity)
 
 
 @router.get("/api/items", response_model=list[InventoryItem])
@@ -232,6 +258,7 @@ def create_app(db_path: Path | str | None = None) -> FastAPI:
     async def lifespan(_: FastAPI):
         init_db(db_path)
         seed_db(db_path)
+        bootstrap_admin_if_empty(db_path)
         yield
 
     app = FastAPI(
