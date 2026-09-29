@@ -111,9 +111,6 @@ def logout(
     revoke_current_token(request, identity)
 
 
-
-
-
 @router.get("/api/items", response_model=list[InventoryItem])
 def list_items(
     search: str | None = Query(default=None),
